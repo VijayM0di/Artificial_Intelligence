@@ -1,0 +1,4 @@
+jupyter
+notebook
+mermaid-js
+# Add other dependencies as needed for your scripts and notebooks 

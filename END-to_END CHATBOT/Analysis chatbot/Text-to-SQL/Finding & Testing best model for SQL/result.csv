@@ -1,0 +1,2459 @@
+,model_name,schema,question,sql_query,ratings
+0,qwen2.5:3b,"    
+    CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, auto-incremented
+    supplier_name VARCHAR(100) NOT NULL, -- Name of the supplier company or entity
+    contact_info VARCHAR(100), -- Contact details (e.g., phone, email) of the supplier
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the supplier record was created
+);
+
+CREATE TABLE drug_category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug category, auto-incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the drug category (e.g., Antibiotics, Painkillers)
+);
+
+CREATE TABLE drug (
+    drug_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug, auto-incremented
+    category_id INT, -- ID of the category this drug belongs to
+    drug_name VARCHAR(100) NOT NULL, -- Name of the drug (e.g., Amoxicillin)
+    manufacturer VARCHAR(100), -- Name of the company that produces the drug
+    price DECIMAL(10,2), -- Price per unit of the drug
+    stock INT -- Current stock quantity of the drug in inventory
+);
+
+CREATE TABLE pharmacy (
+    pharmacy_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each pharmacy, auto-incremented
+    pharmacy_name VARCHAR(100) NOT NULL, -- Name of the pharmacy
+    location VARCHAR(100), -- Physical location or address of the pharmacy
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the pharmacy record was created
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the employee works
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    role VARCHAR(50) -- Employee's job role (e.g., Pharmacist, Cashier)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the sale occurred
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date the sale took place
+    total_amount DECIMAL(10,2) -- Total monetary amount of the sale
+);
+
+CREATE TABLE sale_details (
+    sale_detail_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale detail entry, auto-incremented
+    sale_id INT, -- ID of the sale this detail belongs to
+    drug_id INT, -- ID of the drug sold
+    quantity INT, -- Number of units of the drug sold
+    subtotal DECIMAL(10,2) -- Total cost for this drug in the sale (quantity * price)
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, auto-incremented
+    drug_id INT, -- ID of the drug being tracked
+    supplier_id INT, -- ID of the supplier providing the drug
+    stock_level INT, -- Current stock level of the drug from this supplier
+    last_updated DATE -- Date when the stock level was last updated
+);
+
+CREATE TABLE prescription (
+    prescription_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each prescription, auto-incremented
+    sale_id INT, -- ID of the sale associated with this prescription
+    doctor_name VARCHAR(100), -- Name of the doctor who issued the prescription
+    prescription_date DATE -- Date the prescription was issued
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy receiving the feedback
+    rating INT CHECK (rating >= 1 AND rating <= 5), -- Customer rating (1 to 5 stars)
+    comments TEXT, -- Customer comments or notes
+    feedback_date DATE -- Date the feedback was submitted
+);","List all drugs in the 'Painkillers' category with a stock below 100 units, along with their supplier names and the date when their inventory was last updated. Order results by oldest inventory update first.","```sql
+SELECT d.drug_name, s.supplier_name, i.last_updated
+FROM drug d
+JOIN inventory i ON d.drug_id = i.drug_id
+JOIN supplier s ON i.supplier_id = s.supplier_id
+WHERE d.category_id IN (SELECT category_id FROM drug_category WHERE category_name = 'Painkillers')
+AND d.stock < 100
+ORDER BY i.last_updated ASC;
+```",9
+1,qwen2.5:3b,"CREATE TABLE store (
+    store_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each store, automatically incremented
+    store_name VARCHAR(50) NOT NULL, -- Name of the store
+    location VARCHAR(100) -- Physical location or address of the store
+);
+
+CREATE TABLE department (
+    department_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each department, automatically incremented
+    department_name VARCHAR(50) NOT NULL -- Name of the department (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the product category (e.g., TVs, Shirts)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""LED TV 55-inch"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    store_id INT, -- ID of the store where the employee works
+    department_id INT, -- ID of the department the employee is assigned to
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (department_id) REFERENCES department(department_id) -- Links to department table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    first_name VARCHAR(50), -- Customer's first name
+    email VARCHAR(100) -- Customer's email address
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    store_id INT, -- ID of the store where the sale occurred
+    employee_id INT, -- ID of the employee who processed the sale
+    customer_id INT, -- ID of the customer who made the purchase
+    sale_date DATETIME, -- Date and time when the sale took place
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id), -- Links to employee table
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id) -- Links to customer table
+);
+
+CREATE TABLE sale_items (
+    sale_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale item, automatically incremented
+    sale_id INT, -- ID of the sale this item belongs to
+    product_id INT, -- ID of the product sold
+    quantity INT, -- Number of units of the product sold
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the sale
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id), -- Links to sales table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE stock (
+    stock_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each stock record, automatically incremented
+    product_id INT, -- ID of the product being tracked
+    store_id INT, -- ID of the store holding this stock
+    quantity INT, -- Current stock quantity of the product at the store
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (store_id) REFERENCES store(store_id) -- Links to store table
+);
+
+
+
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- employee.store_id can be joined with store.store_id -- Associates employees with the store they work at.
+-- employee.department_id can be joined with department.department_id -- Links employees to their assigned department.
+-- sales.store_id can be joined with store.store_id -- Ties sales to the store where they occurred.
+-- sales.employee_id can be joined with employee.employee_id -- Connects sales to the employee who processed them.
+-- sales.customer_id can be joined with customer.customer_id -- Links sales to the customer who made the purchase.
+-- sale_items.sale_id can be joined with sales.sale_id -- Associates sale items with their corresponding sale.
+-- sale_items.product_id can be joined with product.product_id -- Connects sale items to the specific product sold.
+-- stock.product_id can be joined with product.product_id -- Ties stock records to the products they track.
+-- stock.store_id can be joined with store.store_id -- Links stock records to the store holding the inventory.","Identify the top 5 products by total sales amount in the last quarter of 2024, including their category names and the store locations where they were sold. Order the results by total sales amount in descending order.","```sql
+WITH sales_total AS (
+    SELECT 
+        s.sale_id,
+        p.category_name,
+        c.location,
+        SUM(si.subtotal) AS total_sales_amount
+    FROM 
+        sales s
+    JOIN 
+        sale_items si ON s.sale_id = si.sale_id
+    JOIN 
+        product p ON si.product_id = p.product_id
+    JOIN 
+        store c ON s.store_id = c.store_id
+    WHERE 
+        s.sale_date >= '2024-10-01' AND s.sale_date < '2024-12-01'
+    GROUP BY 
+        s.sale_id, p.category_name, c.location
+),
+top_products AS (
+    SELECT 
+        category_name,
+        location,
+        total_sales_amount,
+        RANK() OVER (ORDER BY total_sales_amount DESC) AS product_rank
+    FROM 
+        sales_total
+)
+SELECT 
+    tp.category_name AS category,
+    tp.location AS store_location,
+    tp.total_sales_amount,
+    tpd.product_name
+FROM 
+    top_products tp
+JOIN 
+    product pd ON tp.category_name = pd.category_name AND tp.location = pd.store_id
+JOIN 
+    category c ON tp.category_name = c.category_name
+WHERE 
+    tp.product_rank <= 5
+ORDER BY 
+    tp.total_sales_amount DESC;
+```",5
+2,qwen2.5:3b,"CREATE TABLE user (
+    user_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each user, automatically incremented
+    username VARCHAR(50) UNIQUE, -- Unique username chosen by the user
+    email VARCHAR(100), -- User's email address
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the user account was created
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) -- Name of the product category (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Wireless Mouse"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    stock INT -- Current stock quantity of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    user_id INT, -- ID of the user who placed the order
+    order_date DATETIME, -- Date and time when the order was placed
+    status ENUM('PENDING', 'SHIPPED', 'DELIVERED'), -- Current status of the order
+    total_amount DECIMAL(10,2), -- Total monetary amount of the order
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+CREATE TABLE order_item (
+    order_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order item, automatically incremented
+    order_id INT, -- ID of the order this item belongs to
+    product_id INT, -- ID of the product ordered
+    quantity INT, -- Number of units of the product ordered
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the order
+    FOREIGN KEY (order_id) REFERENCES order_(order_id), -- Links to order_ table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE payment (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each payment, automatically incremented
+    order_id INT, -- ID of the order associated with this payment
+    amount DECIMAL(10,2), -- Amount paid for the order
+    payment_date DATETIME, -- Date and time when the payment was made
+    method ENUM('CARD', 'PAYPAL', 'COD'), -- Payment method used (Credit Card, PayPal, Cash on Delivery)
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE shipping (
+    shipping_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each shipping record, automatically incremented
+    order_id INT, -- ID of the order being shipped
+    shipping_date DATE, -- Date when the order was shipped
+    tracking_number VARCHAR(50), -- Tracking number for the shipment
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE review (
+    review_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each review, automatically incremented
+    product_id INT, -- ID of the product being reviewed
+    user_id INT, -- ID of the user who wrote the review
+    rating INT, -- Rating given by the user (e.g., 1 to 5)
+    comment TEXT, -- Text comment or feedback about the product
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- order_.user_id can be joined with user.user_id -- Ties orders to the user who placed them.
+-- order_item.order_id can be joined with order_.order_id -- Links order items to their corresponding order.
+-- order_item.product_id can be joined with product.product_id -- Connects order items to the specific product ordered.
+-- payment.order_id can be joined with order_.order_id -- Associates payments with the order they cover.
+-- shipping.order_id can be joined with order_.order_id -- Links shipping records to the order being shipped.
+-- review.product_id can be joined with product.product_id -- Ties reviews to the product being reviewed.
+-- review.user_id can be joined with user.user_id -- Connects reviews to the user who wrote them.","Find the top 3 products with the highest average rating from user reviews, including their category names and total sales amounts. Only consider products that have been ordered at least 10 times. Order the results by average rating in descending order.","```sql
+WITH product_ratings AS (
+    SELECT 
+        p.product_id,
+        AVG(r.rating) AS avg_rating
+    FROM 
+        product p
+    JOIN 
+        order_item oi ON p.product_id = oi.product_id
+    JOIN 
+        review r ON p.product_id = r.product_id
+    WHERE 
+        oi.quantity > 0
+    GROUP BY 
+        p.product_id
+), filtered_products AS (
+    SELECT 
+        prp.product_id
+    FROM 
+        product_ratings prp
+    INNER JOIN 
+        product p ON prp.product_id = p.product_id
+    INNER JOIN 
+        order_ o ON p.product_id = o.order_item_id
+    GROUP BY 
+        prp.product_id, p.category_name, p.product_name, p.price, p.stock
+    HAVING 
+        COUNT(o.order_id) >= 10
+), final_products AS (
+    SELECT 
+        fp.product_id,
+        p.category_name,
+        AVG(prp.avg_rating) AS avg_rating,
+        SUM(oi.quantity * p.price) AS total_sales_amount
+    FROM 
+        filtered_products fp
+    JOIN 
+        product_ratings prp ON fp.product_id = prp.product_id
+    JOIN 
+        order_item oi ON fp.product_id = oi.product_id
+    JOIN 
+        product p ON fp.product_id = p.product_id
+    GROUP BY 
+        fp.product_id, p.category_name, p.product_name, p.price, p.stock
+    ORDER BY 
+        avg_rating DESC
+    LIMIT 3
+)
+SELECT * FROM final_products;
+```",4
+3,qwen2.5:3b,"CREATE TABLE agent (
+    agent_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each agent, automatically incremented
+    first_name VARCHAR(50), -- Agent's first name
+    last_name VARCHAR(50), -- Agent's last name
+    phone VARCHAR(20) -- Agent's phone number
+);
+
+CREATE TABLE property_type (
+    type_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property type, automatically incremented
+    type_name VARCHAR(50) NOT NULL -- Name of the property type (e.g., House, Apartment)
+);
+
+CREATE TABLE property (
+    property_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property, automatically incremented
+    type_id INT, -- ID of the property type this property belongs to
+    address TEXT, -- Full address of the property
+    price DECIMAL(12,2), -- Listed price of the property
+    status ENUM('AVAILABLE', 'SOLD', 'PENDING'), -- Current status of the property
+    FOREIGN KEY (type_id) REFERENCES property_type(type_id) -- Links to property_type table
+);
+
+CREATE TABLE client (
+    client_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each client, automatically incremented
+    first_name VARCHAR(50), -- Client's first name
+    last_name VARCHAR(50), -- Client's last name
+    email VARCHAR(100) -- Client's email address
+);
+
+CREATE TABLE sale (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    property_id INT, -- ID of the property sold
+    agent_id INT, -- ID of the agent who facilitated the sale
+    client_id INT, -- ID of the client who purchased the property
+    sale_date DATE, -- Date when the sale was completed
+    sale_price DECIMAL(12,2), -- Final sale price of the property
+    FOREIGN KEY (property_id) REFERENCES property(property_id), -- Links to property table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+CREATE TABLE commission (
+    commission_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each commission record, automatically incremented
+    sale_id INT, -- ID of the sale this commission is tied to
+    agent_id INT, -- ID of the agent receiving the commission
+    amount DECIMAL(10,2), -- Commission amount earned by the agent
+    FOREIGN KEY (sale_id) REFERENCES sale(sale_id), -- Links to sale table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id) -- Links to agent table
+);
+
+CREATE TABLE appointment (
+    appointment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each appointment, automatically incremented
+    agent_id INT, -- ID of the agent conducting the appointment
+    client_id INT, -- ID of the client attending the appointment
+    property_id INT, -- ID of the property being shown or discussed
+    appointment_date DATETIME, -- Date and time of the appointment
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id), -- Links to client table
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE expense (
+    expense_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each expense record, automatically incremented
+    property_id INT, -- ID of the property associated with the expense
+    amount DECIMAL(10,2), -- Amount of the expense
+    description TEXT, -- Details or reason for the expense (e.g., repairs, marketing)
+    expense_date DATE, -- Date when the expense was incurred
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, automatically incremented
+    client_id INT, -- ID of the client providing the feedback
+    rating INT, -- Rating given by the client (e.g., 1 to 5)
+    comments TEXT, -- Additional comments or notes from the client
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+
+-- property.type_id can be joined with property_type.type_id -- Connects each property to its type.
+-- sale.property_id can be joined with property.property_id -- Ties sales to the property sold.
+-- sale.agent_id can be joined with agent.agent_id -- Links sales to the agent who facilitated them.
+-- sale.client_id can be joined with client.client_id -- Connects sales to the client who purchased the property.
+-- commission.sale_id can be joined with sale.sale_id -- Associates commissions with their corresponding sale.
+-- commission.agent_id can be joined with agent.agent_id -- Links commissions to the agent receiving them.
+-- appointment.agent_id can be joined with agent.agent_id -- Ties appointments to the agent conducting them.
+-- appointment.client_id can be joined with client.client_id -- Connects appointments to the client attending them.
+-- appointment.property_id can be joined with property.property_id -- Links appointments to the property being shown.
+-- expense.property_id can be joined with property.property_id -- Associates expenses with the property they relate to.
+-- feedback.client_id can be joined with client.client_id -- Connects feedback to the client providing it.","List all agents who have facilitated sales of properties with a total sale price exceeding $500,000 in the last year. Include their full names, the number of properties sold, and the total commission earned. Order the results by total commission in descending order.","```sql
+SELECT 
+    a.first_name AS AgentFirstName,
+    a.last_name AS AgentLastName,
+    COUNT(s.sale_id) AS NumberOfPropertiesSold,
+    SUM(c.amount) AS TotalCommissionEarned
+FROM 
+    agent a
+JOIN 
+    sale s ON a.agent_id = s.agent_id
+JOIN 
+    commission c ON s.sale_id = c.sale_id AND c.agent_id = a.agent_id
+WHERE 
+    s.sale_date >= DATEADD(year, -1, GETDATE())
+GROUP BY 
+    a.agent_id, a.first_name, a.last_name
+HAVING 
+    SUM(s.sale_price) > 500000.00
+ORDER BY 
+    TotalCommissionEarned DESC;
+```",8
+4,qwen2.5:3b,"CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, automatically incremented
+    supplier_name VARCHAR(100), -- Name of the supplier company or entity
+    contact VARCHAR(100) -- Contact information for the supplier (e.g., phone, email)
+);
+
+CREATE TABLE raw_material (
+    material_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each raw material, automatically incremented
+    material_name VARCHAR(100), -- Name of the raw material (e.g., Steel, Cotton)
+    unit_cost DECIMAL(10,2) -- Cost per unit of the raw material
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Steel Table"")
+    sale_price DECIMAL(10,2) -- Price at which the product is sold per unit
+);
+
+CREATE TABLE production (
+    production_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each production batch, automatically incremented
+    product_id INT, -- ID of the product being produced
+    production_date DATE, -- Date when the production occurred
+    quantity INT, -- Number of units produced in this batch
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    first_name VARCHAR(50), -- Employee's first name
+    role VARCHAR(50) -- Employee's job role (e.g., Salesperson, Production Worker)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    product_id INT, -- ID of the product sold
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date when the sale took place
+    quantity_sold INT, -- Number of units sold
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) -- Links to employee table
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, automatically incremented
+    material_id INT, -- ID of the raw material being tracked
+    stock_level INT, -- Current stock quantity of the raw material
+    FOREIGN KEY (material_id) REFERENCES raw_material(material_id) -- Links to raw_material table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    company_name VARCHAR(100), -- Name of the customer company or entity
+    contact VARCHAR(100) -- Contact information for the customer (e.g., phone, email)
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    customer_id INT, -- ID of the customer who placed the order
+    sale_id INT, -- ID of the sale associated with this order
+    order_date DATE, -- Date when the order was placed
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id), -- Links to customer table
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) -- Links to sales table
+);
+
+
+-- production.product_id can be joined with product.product_id -- Connects production batches to the product being produced.
+-- sales.product_id can be joined with product.product_id -- Ties sales to the product sold.
+-- sales.employee_id can be joined with employee.employee_id -- Links sales to the employee who made them.
+-- inventory.material_id can be joined with raw_material.material_id -- Associates inventory records with the raw materials they track.
+-- order_.customer_id can be joined with customer.customer_id -- Connects orders to the customer who placed them.
+-- order_.sale_id can be joined with sales.sale_id -- Links orders to their corresponding sale.","Identify the top 5 products by total sales amount in the last quarter of 2024, including the name of the employee who made the sale and the total quantity sold for each product. Order the results by total sales amount in descending order.","```sql
+SELECT 
+    p.product_name,
+    e.first_name,
+    SUM(s.quantity_sold) AS total_quantity_sold,
+    ROUND(SUM(s.total_amount), 2) AS total_sales_amount
+FROM 
+    sales s
+JOIN 
+    employee e ON s.employee_id = e.employee_id
+JOIN 
+    product p ON s.product_id = p.product_id
+WHERE 
+    s.sale_date >= '2024-10-01' AND s.sale_date < '2025-01-01'
+GROUP BY 
+    p.product_name, e.first_name
+ORDER BY 
+    total_sales_amount DESC
+LIMIT 5;
+```",8
+5,gemma3:4b,"    
+    CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, auto-incremented
+    supplier_name VARCHAR(100) NOT NULL, -- Name of the supplier company or entity
+    contact_info VARCHAR(100), -- Contact details (e.g., phone, email) of the supplier
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the supplier record was created
+);
+
+CREATE TABLE drug_category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug category, auto-incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the drug category (e.g., Antibiotics, Painkillers)
+);
+
+CREATE TABLE drug (
+    drug_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug, auto-incremented
+    category_id INT, -- ID of the category this drug belongs to
+    drug_name VARCHAR(100) NOT NULL, -- Name of the drug (e.g., Amoxicillin)
+    manufacturer VARCHAR(100), -- Name of the company that produces the drug
+    price DECIMAL(10,2), -- Price per unit of the drug
+    stock INT -- Current stock quantity of the drug in inventory
+);
+
+CREATE TABLE pharmacy (
+    pharmacy_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each pharmacy, auto-incremented
+    pharmacy_name VARCHAR(100) NOT NULL, -- Name of the pharmacy
+    location VARCHAR(100), -- Physical location or address of the pharmacy
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the pharmacy record was created
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the employee works
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    role VARCHAR(50) -- Employee's job role (e.g., Pharmacist, Cashier)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the sale occurred
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date the sale took place
+    total_amount DECIMAL(10,2) -- Total monetary amount of the sale
+);
+
+CREATE TABLE sale_details (
+    sale_detail_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale detail entry, auto-incremented
+    sale_id INT, -- ID of the sale this detail belongs to
+    drug_id INT, -- ID of the drug sold
+    quantity INT, -- Number of units of the drug sold
+    subtotal DECIMAL(10,2) -- Total cost for this drug in the sale (quantity * price)
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, auto-incremented
+    drug_id INT, -- ID of the drug being tracked
+    supplier_id INT, -- ID of the supplier providing the drug
+    stock_level INT, -- Current stock level of the drug from this supplier
+    last_updated DATE -- Date when the stock level was last updated
+);
+
+CREATE TABLE prescription (
+    prescription_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each prescription, auto-incremented
+    sale_id INT, -- ID of the sale associated with this prescription
+    doctor_name VARCHAR(100), -- Name of the doctor who issued the prescription
+    prescription_date DATE -- Date the prescription was issued
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy receiving the feedback
+    rating INT CHECK (rating >= 1 AND rating <= 5), -- Customer rating (1 to 5 stars)
+    comments TEXT, -- Customer comments or notes
+    feedback_date DATE -- Date the feedback was submitted
+);","List all drugs in the 'Painkillers' category with a stock below 100 units, along with their supplier names and the date when their inventory was last updated. Order results by oldest inventory update first.","```sql
+SELECT
+  d.drug_name,
+  s.supplier_name,
+  i.last_updated
+FROM drug AS d
+JOIN inventory AS i
+  ON d.drug_id = i.drug_id
+JOIN supplier AS s
+  ON i.supplier_id = s.supplier_id
+WHERE
+  d.category_id = (
+    SELECT
+      category_id
+    FROM drug_category
+    WHERE
+      category_name = 'Painkillers'
+  )
+  AND d.stock < 100
+ORDER BY
+  i.last_updated ASC;
+```",9
+6,gemma3:4b,"CREATE TABLE store (
+    store_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each store, automatically incremented
+    store_name VARCHAR(50) NOT NULL, -- Name of the store
+    location VARCHAR(100) -- Physical location or address of the store
+);
+
+CREATE TABLE department (
+    department_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each department, automatically incremented
+    department_name VARCHAR(50) NOT NULL -- Name of the department (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the product category (e.g., TVs, Shirts)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""LED TV 55-inch"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    store_id INT, -- ID of the store where the employee works
+    department_id INT, -- ID of the department the employee is assigned to
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (department_id) REFERENCES department(department_id) -- Links to department table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    first_name VARCHAR(50), -- Customer's first name
+    email VARCHAR(100) -- Customer's email address
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    store_id INT, -- ID of the store where the sale occurred
+    employee_id INT, -- ID of the employee who processed the sale
+    customer_id INT, -- ID of the customer who made the purchase
+    sale_date DATETIME, -- Date and time when the sale took place
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id), -- Links to employee table
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id) -- Links to customer table
+);
+
+CREATE TABLE sale_items (
+    sale_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale item, automatically incremented
+    sale_id INT, -- ID of the sale this item belongs to
+    product_id INT, -- ID of the product sold
+    quantity INT, -- Number of units of the product sold
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the sale
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id), -- Links to sales table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE stock (
+    stock_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each stock record, automatically incremented
+    product_id INT, -- ID of the product being tracked
+    store_id INT, -- ID of the store holding this stock
+    quantity INT, -- Current stock quantity of the product at the store
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (store_id) REFERENCES store(store_id) -- Links to store table
+);
+
+
+
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- employee.store_id can be joined with store.store_id -- Associates employees with the store they work at.
+-- employee.department_id can be joined with department.department_id -- Links employees to their assigned department.
+-- sales.store_id can be joined with store.store_id -- Ties sales to the store where they occurred.
+-- sales.employee_id can be joined with employee.employee_id -- Connects sales to the employee who processed them.
+-- sales.customer_id can be joined with customer.customer_id -- Links sales to the customer who made the purchase.
+-- sale_items.sale_id can be joined with sales.sale_id -- Associates sale items with their corresponding sale.
+-- sale_items.product_id can be joined with product.product_id -- Connects sale items to the specific product sold.
+-- stock.product_id can be joined with product.product_id -- Ties stock records to the products they track.
+-- stock.store_id can be joined with store.store_id -- Links stock records to the store holding the inventory.","Identify the top 5 products by total sales amount in the last quarter of 2024, including their category names and the store locations where they were sold. Order the results by total sales amount in descending order.","```sql
+SELECT
+  p.product_name,
+  c.category_name,
+  s.location
+FROM product AS p
+JOIN category AS c
+  ON p.category_id = c.category_id
+JOIN sale_items AS si
+  ON p.product_id = si.product_id
+JOIN sales AS s
+  ON si.sale_id = s.sale_id
+JOIN store AS s1
+  ON s1.store_id = s1.store_id
+WHERE
+  s.sale_date >= '2024-10-01' AND s.sale_date < '2025-01-01'
+GROUP BY
+  p.product_id
+ORDER BY
+  SUM(si.quantity * p.price) DESC
+LIMIT 5;
+```",6
+7,gemma3:4b,"CREATE TABLE user (
+    user_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each user, automatically incremented
+    username VARCHAR(50) UNIQUE, -- Unique username chosen by the user
+    email VARCHAR(100), -- User's email address
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the user account was created
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) -- Name of the product category (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Wireless Mouse"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    stock INT -- Current stock quantity of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    user_id INT, -- ID of the user who placed the order
+    order_date DATETIME, -- Date and time when the order was placed
+    status ENUM('PENDING', 'SHIPPED', 'DELIVERED'), -- Current status of the order
+    total_amount DECIMAL(10,2), -- Total monetary amount of the order
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+CREATE TABLE order_item (
+    order_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order item, automatically incremented
+    order_id INT, -- ID of the order this item belongs to
+    product_id INT, -- ID of the product ordered
+    quantity INT, -- Number of units of the product ordered
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the order
+    FOREIGN KEY (order_id) REFERENCES order_(order_id), -- Links to order_ table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE payment (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each payment, automatically incremented
+    order_id INT, -- ID of the order associated with this payment
+    amount DECIMAL(10,2), -- Amount paid for the order
+    payment_date DATETIME, -- Date and time when the payment was made
+    method ENUM('CARD', 'PAYPAL', 'COD'), -- Payment method used (Credit Card, PayPal, Cash on Delivery)
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE shipping (
+    shipping_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each shipping record, automatically incremented
+    order_id INT, -- ID of the order being shipped
+    shipping_date DATE, -- Date when the order was shipped
+    tracking_number VARCHAR(50), -- Tracking number for the shipment
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE review (
+    review_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each review, automatically incremented
+    product_id INT, -- ID of the product being reviewed
+    user_id INT, -- ID of the user who wrote the review
+    rating INT, -- Rating given by the user (e.g., 1 to 5)
+    comment TEXT, -- Text comment or feedback about the product
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- order_.user_id can be joined with user.user_id -- Ties orders to the user who placed them.
+-- order_item.order_id can be joined with order_.order_id -- Links order items to their corresponding order.
+-- order_item.product_id can be joined with product.product_id -- Connects order items to the specific product ordered.
+-- payment.order_id can be joined with order_.order_id -- Associates payments with the order they cover.
+-- shipping.order_id can be joined with order_.order_id -- Links shipping records to the order being shipped.
+-- review.product_id can be joined with product.product_id -- Ties reviews to the product being reviewed.
+-- review.user_id can be joined with user.user_id -- Connects reviews to the user who wrote them.","Find the top 3 products with the highest average rating from user reviews, including their category names and total sales amounts. Only consider products that have been ordered at least 10 times. Order the results by average rating in descending order.","```sql
+SELECT
+  p.product_name,
+  c.category_name,
+  AVG(r.rating) AS avg_rating,
+  SUM(oi.quantity * p.price) AS total_sales
+FROM product AS p
+JOIN category AS c
+  ON p.category_id = c.category_id
+JOIN review AS r
+  ON p.product_id = r.product_id
+JOIN order_item AS oi
+  ON p.product_id = oi.product_id
+JOIN order_ AS o
+  ON oi.order_id = o.order_id
+WHERE
+  o.order_id IN (
+    SELECT
+      order_id
+    FROM order_
+    GROUP BY
+      order_id
+    HAVING
+      COUNT(order_id) >= 10
+  )
+GROUP BY
+  p.product_id,
+  c.category_name
+ORDER BY
+  avg_rating DESC
+LIMIT 3;
+```",7
+8,gemma3:4b,"CREATE TABLE agent (
+    agent_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each agent, automatically incremented
+    first_name VARCHAR(50), -- Agent's first name
+    last_name VARCHAR(50), -- Agent's last name
+    phone VARCHAR(20) -- Agent's phone number
+);
+
+CREATE TABLE property_type (
+    type_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property type, automatically incremented
+    type_name VARCHAR(50) NOT NULL -- Name of the property type (e.g., House, Apartment)
+);
+
+CREATE TABLE property (
+    property_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property, automatically incremented
+    type_id INT, -- ID of the property type this property belongs to
+    address TEXT, -- Full address of the property
+    price DECIMAL(12,2), -- Listed price of the property
+    status ENUM('AVAILABLE', 'SOLD', 'PENDING'), -- Current status of the property
+    FOREIGN KEY (type_id) REFERENCES property_type(type_id) -- Links to property_type table
+);
+
+CREATE TABLE client (
+    client_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each client, automatically incremented
+    first_name VARCHAR(50), -- Client's first name
+    last_name VARCHAR(50), -- Client's last name
+    email VARCHAR(100) -- Client's email address
+);
+
+CREATE TABLE sale (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    property_id INT, -- ID of the property sold
+    agent_id INT, -- ID of the agent who facilitated the sale
+    client_id INT, -- ID of the client who purchased the property
+    sale_date DATE, -- Date when the sale was completed
+    sale_price DECIMAL(12,2), -- Final sale price of the property
+    FOREIGN KEY (property_id) REFERENCES property(property_id), -- Links to property table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+CREATE TABLE commission (
+    commission_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each commission record, automatically incremented
+    sale_id INT, -- ID of the sale this commission is tied to
+    agent_id INT, -- ID of the agent receiving the commission
+    amount DECIMAL(10,2), -- Commission amount earned by the agent
+    FOREIGN KEY (sale_id) REFERENCES sale(sale_id), -- Links to sale table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id) -- Links to agent table
+);
+
+CREATE TABLE appointment (
+    appointment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each appointment, automatically incremented
+    agent_id INT, -- ID of the agent conducting the appointment
+    client_id INT, -- ID of the client attending the appointment
+    property_id INT, -- ID of the property being shown or discussed
+    appointment_date DATETIME, -- Date and time of the appointment
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id), -- Links to client table
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE expense (
+    expense_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each expense record, automatically incremented
+    property_id INT, -- ID of the property associated with the expense
+    amount DECIMAL(10,2), -- Amount of the expense
+    description TEXT, -- Details or reason for the expense (e.g., repairs, marketing)
+    expense_date DATE, -- Date when the expense was incurred
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, automatically incremented
+    client_id INT, -- ID of the client providing the feedback
+    rating INT, -- Rating given by the client (e.g., 1 to 5)
+    comments TEXT, -- Additional comments or notes from the client
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+
+-- property.type_id can be joined with property_type.type_id -- Connects each property to its type.
+-- sale.property_id can be joined with property.property_id -- Ties sales to the property sold.
+-- sale.agent_id can be joined with agent.agent_id -- Links sales to the agent who facilitated them.
+-- sale.client_id can be joined with client.client_id -- Connects sales to the client who purchased the property.
+-- commission.sale_id can be joined with sale.sale_id -- Associates commissions with their corresponding sale.
+-- commission.agent_id can be joined with agent.agent_id -- Links commissions to the agent receiving them.
+-- appointment.agent_id can be joined with agent.agent_id -- Ties appointments to the agent conducting them.
+-- appointment.client_id can be joined with client.client_id -- Connects appointments to the client attending them.
+-- appointment.property_id can be joined with property.property_id -- Links appointments to the property being shown.
+-- expense.property_id can be joined with property.property_id -- Associates expenses with the property they relate to.
+-- feedback.client_id can be joined with client.client_id -- Connects feedback to the client providing it.","List all agents who have facilitated sales of properties with a total sale price exceeding $500,000 in the last year. Include their full names, the number of properties sold, and the total commission earned. Order the results by total commission in descending order.","```sql
+SELECT
+  a.first_name || ' ' || a.last_name AS agent_full_name,
+  COUNT(s.property_id) AS number_of_properties_sold,
+  SUM(c.amount) AS total_commission_earned
+FROM agent AS a
+JOIN sale AS s
+  ON a.agent_id = s.agent_id
+JOIN commission AS c
+  ON s.sale_id = c.sale_id
+WHERE
+  s.sale_date >= DATE('now', '-1 year')
+GROUP BY
+  a.agent_id
+HAVING
+  SUM(s.sale_price) > 500000;
+```",8
+9,gemma3:4b,"CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, automatically incremented
+    supplier_name VARCHAR(100), -- Name of the supplier company or entity
+    contact VARCHAR(100) -- Contact information for the supplier (e.g., phone, email)
+);
+
+CREATE TABLE raw_material (
+    material_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each raw material, automatically incremented
+    material_name VARCHAR(100), -- Name of the raw material (e.g., Steel, Cotton)
+    unit_cost DECIMAL(10,2) -- Cost per unit of the raw material
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Steel Table"")
+    sale_price DECIMAL(10,2) -- Price at which the product is sold per unit
+);
+
+CREATE TABLE production (
+    production_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each production batch, automatically incremented
+    product_id INT, -- ID of the product being produced
+    production_date DATE, -- Date when the production occurred
+    quantity INT, -- Number of units produced in this batch
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    first_name VARCHAR(50), -- Employee's first name
+    role VARCHAR(50) -- Employee's job role (e.g., Salesperson, Production Worker)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    product_id INT, -- ID of the product sold
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date when the sale took place
+    quantity_sold INT, -- Number of units sold
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) -- Links to employee table
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, automatically incremented
+    material_id INT, -- ID of the raw material being tracked
+    stock_level INT, -- Current stock quantity of the raw material
+    FOREIGN KEY (material_id) REFERENCES raw_material(material_id) -- Links to raw_material table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    company_name VARCHAR(100), -- Name of the customer company or entity
+    contact VARCHAR(100) -- Contact information for the customer (e.g., phone, email)
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    customer_id INT, -- ID of the customer who placed the order
+    sale_id INT, -- ID of the sale associated with this order
+    order_date DATE, -- Date when the order was placed
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id), -- Links to customer table
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) -- Links to sales table
+);
+
+
+-- production.product_id can be joined with product.product_id -- Connects production batches to the product being produced.
+-- sales.product_id can be joined with product.product_id -- Ties sales to the product sold.
+-- sales.employee_id can be joined with employee.employee_id -- Links sales to the employee who made them.
+-- inventory.material_id can be joined with raw_material.material_id -- Associates inventory records with the raw materials they track.
+-- order_.customer_id can be joined with customer.customer_id -- Connects orders to the customer who placed them.
+-- order_.sale_id can be joined with sales.sale_id -- Links orders to their corresponding sale.","Identify the top 5 products by total sales amount in the last quarter of 2024, including the name of the employee who made the sale and the total quantity sold for each product. Order the results by total sales amount in descending order.","```sql
+SELECT
+  p.product_name,
+  e.first_name,
+  SUM(s.total_amount) AS total_sales_amount,
+  SUM(s.quantity_sold) AS total_quantity_sold
+FROM product AS p
+JOIN sales AS s
+  ON p.product_id = s.product_id
+JOIN employee AS e
+  ON s.employee_id = e.employee_id
+WHERE
+  s.sale_date BETWEEN '2024-01-01' AND '2024-12-31'
+GROUP BY
+  p.product_name,
+  e.first_name
+ORDER BY
+  total_sales_amount DESC
+LIMIT 5;
+```",6
+10,llama3.2:3b,"    
+    CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, auto-incremented
+    supplier_name VARCHAR(100) NOT NULL, -- Name of the supplier company or entity
+    contact_info VARCHAR(100), -- Contact details (e.g., phone, email) of the supplier
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the supplier record was created
+);
+
+CREATE TABLE drug_category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug category, auto-incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the drug category (e.g., Antibiotics, Painkillers)
+);
+
+CREATE TABLE drug (
+    drug_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug, auto-incremented
+    category_id INT, -- ID of the category this drug belongs to
+    drug_name VARCHAR(100) NOT NULL, -- Name of the drug (e.g., Amoxicillin)
+    manufacturer VARCHAR(100), -- Name of the company that produces the drug
+    price DECIMAL(10,2), -- Price per unit of the drug
+    stock INT -- Current stock quantity of the drug in inventory
+);
+
+CREATE TABLE pharmacy (
+    pharmacy_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each pharmacy, auto-incremented
+    pharmacy_name VARCHAR(100) NOT NULL, -- Name of the pharmacy
+    location VARCHAR(100), -- Physical location or address of the pharmacy
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the pharmacy record was created
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the employee works
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    role VARCHAR(50) -- Employee's job role (e.g., Pharmacist, Cashier)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the sale occurred
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date the sale took place
+    total_amount DECIMAL(10,2) -- Total monetary amount of the sale
+);
+
+CREATE TABLE sale_details (
+    sale_detail_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale detail entry, auto-incremented
+    sale_id INT, -- ID of the sale this detail belongs to
+    drug_id INT, -- ID of the drug sold
+    quantity INT, -- Number of units of the drug sold
+    subtotal DECIMAL(10,2) -- Total cost for this drug in the sale (quantity * price)
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, auto-incremented
+    drug_id INT, -- ID of the drug being tracked
+    supplier_id INT, -- ID of the supplier providing the drug
+    stock_level INT, -- Current stock level of the drug from this supplier
+    last_updated DATE -- Date when the stock level was last updated
+);
+
+CREATE TABLE prescription (
+    prescription_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each prescription, auto-incremented
+    sale_id INT, -- ID of the sale associated with this prescription
+    doctor_name VARCHAR(100), -- Name of the doctor who issued the prescription
+    prescription_date DATE -- Date the prescription was issued
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy receiving the feedback
+    rating INT CHECK (rating >= 1 AND rating <= 5), -- Customer rating (1 to 5 stars)
+    comments TEXT, -- Customer comments or notes
+    feedback_date DATE -- Date the feedback was submitted
+);","List all drugs in the 'Painkillers' category with a stock below 100 units, along with their supplier names and the date when their inventory was last updated. Order results by oldest inventory update first.","SELECT 
+    d.drug_name, 
+    s.supplier_name, 
+    i.last_updated
+FROM 
+    drug d
+JOIN 
+    inventory i ON d.drug_id = i.drug_id
+JOIN 
+    supplier s ON i.supplier_id = s.supplier_id
+WHERE 
+    d.category_id IN (SELECT category_id FROM drug_category WHERE category_name = 'Painkillers')
+AND 
+    d.stock < 100
+ORDER BY 
+    i.last_updated ASC;",9
+11,llama3.2:3b,"CREATE TABLE store (
+    store_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each store, automatically incremented
+    store_name VARCHAR(50) NOT NULL, -- Name of the store
+    location VARCHAR(100) -- Physical location or address of the store
+);
+
+CREATE TABLE department (
+    department_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each department, automatically incremented
+    department_name VARCHAR(50) NOT NULL -- Name of the department (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the product category (e.g., TVs, Shirts)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""LED TV 55-inch"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    store_id INT, -- ID of the store where the employee works
+    department_id INT, -- ID of the department the employee is assigned to
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (department_id) REFERENCES department(department_id) -- Links to department table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    first_name VARCHAR(50), -- Customer's first name
+    email VARCHAR(100) -- Customer's email address
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    store_id INT, -- ID of the store where the sale occurred
+    employee_id INT, -- ID of the employee who processed the sale
+    customer_id INT, -- ID of the customer who made the purchase
+    sale_date DATETIME, -- Date and time when the sale took place
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id), -- Links to employee table
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id) -- Links to customer table
+);
+
+CREATE TABLE sale_items (
+    sale_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale item, automatically incremented
+    sale_id INT, -- ID of the sale this item belongs to
+    product_id INT, -- ID of the product sold
+    quantity INT, -- Number of units of the product sold
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the sale
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id), -- Links to sales table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE stock (
+    stock_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each stock record, automatically incremented
+    product_id INT, -- ID of the product being tracked
+    store_id INT, -- ID of the store holding this stock
+    quantity INT, -- Current stock quantity of the product at the store
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (store_id) REFERENCES store(store_id) -- Links to store table
+);
+
+
+
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- employee.store_id can be joined with store.store_id -- Associates employees with the store they work at.
+-- employee.department_id can be joined with department.department_id -- Links employees to their assigned department.
+-- sales.store_id can be joined with store.store_id -- Ties sales to the store where they occurred.
+-- sales.employee_id can be joined with employee.employee_id -- Connects sales to the employee who processed them.
+-- sales.customer_id can be joined with customer.customer_id -- Links sales to the customer who made the purchase.
+-- sale_items.sale_id can be joined with sales.sale_id -- Associates sale items with their corresponding sale.
+-- sale_items.product_id can be joined with product.product_id -- Connects sale items to the specific product sold.
+-- stock.product_id can be joined with product.product_id -- Ties stock records to the products they track.
+-- stock.store_id can be joined with store.store_id -- Links stock records to the store holding the inventory.","Identify the top 5 products by total sales amount in the last quarter of 2024, including their category names and the store locations where they were sold. Order the results by total sales amount in descending order.","SELECT 
+    p.product_name,
+    c.category_name,
+    s.location AS store_location,
+    SUM(s.subtotal) AS total_sales_amount
+FROM 
+    sales s
+JOIN 
+    employee e ON s.employee_id = e.employee_id
+JOIN 
+    store st ON e.store_id = st.store_id
+JOIN 
+    sale_items si ON s.sale_id = si.sale_id
+JOIN 
+    product p ON si.product_id = p.product_id
+JOIN 
+    category c ON p.category_id = c.category_id
+WHERE 
+    EXTRACT(MONTH FROM s.sale_date) BETWEEN 7 AND 12
+GROUP BY 
+    p.product_name, c.category_name, st.location
+ORDER BY 
+    total_sales_amount DESC LIMIT 5;",7
+12,llama3.2:3b,"CREATE TABLE user (
+    user_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each user, automatically incremented
+    username VARCHAR(50) UNIQUE, -- Unique username chosen by the user
+    email VARCHAR(100), -- User's email address
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the user account was created
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) -- Name of the product category (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Wireless Mouse"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    stock INT -- Current stock quantity of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    user_id INT, -- ID of the user who placed the order
+    order_date DATETIME, -- Date and time when the order was placed
+    status ENUM('PENDING', 'SHIPPED', 'DELIVERED'), -- Current status of the order
+    total_amount DECIMAL(10,2), -- Total monetary amount of the order
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+CREATE TABLE order_item (
+    order_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order item, automatically incremented
+    order_id INT, -- ID of the order this item belongs to
+    product_id INT, -- ID of the product ordered
+    quantity INT, -- Number of units of the product ordered
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the order
+    FOREIGN KEY (order_id) REFERENCES order_(order_id), -- Links to order_ table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE payment (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each payment, automatically incremented
+    order_id INT, -- ID of the order associated with this payment
+    amount DECIMAL(10,2), -- Amount paid for the order
+    payment_date DATETIME, -- Date and time when the payment was made
+    method ENUM('CARD', 'PAYPAL', 'COD'), -- Payment method used (Credit Card, PayPal, Cash on Delivery)
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE shipping (
+    shipping_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each shipping record, automatically incremented
+    order_id INT, -- ID of the order being shipped
+    shipping_date DATE, -- Date when the order was shipped
+    tracking_number VARCHAR(50), -- Tracking number for the shipment
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE review (
+    review_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each review, automatically incremented
+    product_id INT, -- ID of the product being reviewed
+    user_id INT, -- ID of the user who wrote the review
+    rating INT, -- Rating given by the user (e.g., 1 to 5)
+    comment TEXT, -- Text comment or feedback about the product
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- order_.user_id can be joined with user.user_id -- Ties orders to the user who placed them.
+-- order_item.order_id can be joined with order_.order_id -- Links order items to their corresponding order.
+-- order_item.product_id can be joined with product.product_id -- Connects order items to the specific product ordered.
+-- payment.order_id can be joined with order_.order_id -- Associates payments with the order they cover.
+-- shipping.order_id can be joined with order_.order_id -- Links shipping records to the order being shipped.
+-- review.product_id can be joined with product.product_id -- Ties reviews to the product being reviewed.
+-- review.user_id can be joined with user.user_id -- Connects reviews to the user who wrote them.","Find the top 3 products with the highest average rating from user reviews, including their category names and total sales amounts. Only consider products that have been ordered at least 10 times. Order the results by average rating in descending order.","SELECT 
+    p.product_name,
+    c.category_name,
+    CAST(COUNT(oi.order_item_id) AS FLOAT) / COUNT(DISTINCT o.order_id) AS average_rating,
+    SUM(i.quantity) * (p.price + i.subtotal - COALESCE(p.price, 0)) AS total_sales
+FROM 
+    product p
+JOIN 
+    category c ON p.category_id = c.category_id
+LEFT JOIN 
+    order_item oi ON p.product_id = oi.product_id
+LEFT JOIN 
+    order_ o ON oi.order_id = o.order_id
+WHERE 
+    COUNT(DISTINCT oi.order_item_id) >= 10
+GROUP BY 
+    p.product_name, c.category_name
+ORDER BY 
+    average_rating DESC",2
+13,llama3.2:3b,"CREATE TABLE agent (
+    agent_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each agent, automatically incremented
+    first_name VARCHAR(50), -- Agent's first name
+    last_name VARCHAR(50), -- Agent's last name
+    phone VARCHAR(20) -- Agent's phone number
+);
+
+CREATE TABLE property_type (
+    type_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property type, automatically incremented
+    type_name VARCHAR(50) NOT NULL -- Name of the property type (e.g., House, Apartment)
+);
+
+CREATE TABLE property (
+    property_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property, automatically incremented
+    type_id INT, -- ID of the property type this property belongs to
+    address TEXT, -- Full address of the property
+    price DECIMAL(12,2), -- Listed price of the property
+    status ENUM('AVAILABLE', 'SOLD', 'PENDING'), -- Current status of the property
+    FOREIGN KEY (type_id) REFERENCES property_type(type_id) -- Links to property_type table
+);
+
+CREATE TABLE client (
+    client_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each client, automatically incremented
+    first_name VARCHAR(50), -- Client's first name
+    last_name VARCHAR(50), -- Client's last name
+    email VARCHAR(100) -- Client's email address
+);
+
+CREATE TABLE sale (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    property_id INT, -- ID of the property sold
+    agent_id INT, -- ID of the agent who facilitated the sale
+    client_id INT, -- ID of the client who purchased the property
+    sale_date DATE, -- Date when the sale was completed
+    sale_price DECIMAL(12,2), -- Final sale price of the property
+    FOREIGN KEY (property_id) REFERENCES property(property_id), -- Links to property table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+CREATE TABLE commission (
+    commission_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each commission record, automatically incremented
+    sale_id INT, -- ID of the sale this commission is tied to
+    agent_id INT, -- ID of the agent receiving the commission
+    amount DECIMAL(10,2), -- Commission amount earned by the agent
+    FOREIGN KEY (sale_id) REFERENCES sale(sale_id), -- Links to sale table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id) -- Links to agent table
+);
+
+CREATE TABLE appointment (
+    appointment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each appointment, automatically incremented
+    agent_id INT, -- ID of the agent conducting the appointment
+    client_id INT, -- ID of the client attending the appointment
+    property_id INT, -- ID of the property being shown or discussed
+    appointment_date DATETIME, -- Date and time of the appointment
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id), -- Links to client table
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE expense (
+    expense_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each expense record, automatically incremented
+    property_id INT, -- ID of the property associated with the expense
+    amount DECIMAL(10,2), -- Amount of the expense
+    description TEXT, -- Details or reason for the expense (e.g., repairs, marketing)
+    expense_date DATE, -- Date when the expense was incurred
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, automatically incremented
+    client_id INT, -- ID of the client providing the feedback
+    rating INT, -- Rating given by the client (e.g., 1 to 5)
+    comments TEXT, -- Additional comments or notes from the client
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+
+-- property.type_id can be joined with property_type.type_id -- Connects each property to its type.
+-- sale.property_id can be joined with property.property_id -- Ties sales to the property sold.
+-- sale.agent_id can be joined with agent.agent_id -- Links sales to the agent who facilitated them.
+-- sale.client_id can be joined with client.client_id -- Connects sales to the client who purchased the property.
+-- commission.sale_id can be joined with sale.sale_id -- Associates commissions with their corresponding sale.
+-- commission.agent_id can be joined with agent.agent_id -- Links commissions to the agent receiving them.
+-- appointment.agent_id can be joined with agent.agent_id -- Ties appointments to the agent conducting them.
+-- appointment.client_id can be joined with client.client_id -- Connects appointments to the client attending them.
+-- appointment.property_id can be joined with property.property_id -- Links appointments to the property being shown.
+-- expense.property_id can be joined with property.property_id -- Associates expenses with the property they relate to.
+-- feedback.client_id can be joined with client.client_id -- Connects feedback to the client providing it.","List all agents who have facilitated sales of properties with a total sale price exceeding $500,000 in the last year. Include their full names, the number of properties sold, and the total commission earned. Order the results by total commission in descending order.","SELECT 
+    a.first_name, a.last_name, c.first_name AS client_first_name,
+    COUNT(DISTINCT p.property_id) AS num_properties_sold,
+    COALESCE(SUM(c.amount), 0) AS total_commission_earned
+FROM 
+    sale s
+JOIN 
+    commission c ON s.sale_id = c.sale_id
+JOIN 
+    agent a ON s.agent_id = a.agent_id
+LEFT JOIN 
+    appointment ap ON s.client_id = ap.client_id AND s.agent_id = ap.agent_id
+LEFT JOIN 
+    property p ON s.property_id = p.property_id
+WHERE 
+    EXTRACT(YEAR FROM CURRENT_DATE) - EXTRACT(YEAR FROM s.sale_date) = 1
+GROUP BY 
+    a.first_name, a.last_name, c.first_name
+HAVING 
+    SUM(c.amount) > 500000.00
+ORDER BY 
+    total_commission_earned DESC;",5
+14,llama3.2:3b,"CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, automatically incremented
+    supplier_name VARCHAR(100), -- Name of the supplier company or entity
+    contact VARCHAR(100) -- Contact information for the supplier (e.g., phone, email)
+);
+
+CREATE TABLE raw_material (
+    material_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each raw material, automatically incremented
+    material_name VARCHAR(100), -- Name of the raw material (e.g., Steel, Cotton)
+    unit_cost DECIMAL(10,2) -- Cost per unit of the raw material
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Steel Table"")
+    sale_price DECIMAL(10,2) -- Price at which the product is sold per unit
+);
+
+CREATE TABLE production (
+    production_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each production batch, automatically incremented
+    product_id INT, -- ID of the product being produced
+    production_date DATE, -- Date when the production occurred
+    quantity INT, -- Number of units produced in this batch
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    first_name VARCHAR(50), -- Employee's first name
+    role VARCHAR(50) -- Employee's job role (e.g., Salesperson, Production Worker)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    product_id INT, -- ID of the product sold
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date when the sale took place
+    quantity_sold INT, -- Number of units sold
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) -- Links to employee table
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, automatically incremented
+    material_id INT, -- ID of the raw material being tracked
+    stock_level INT, -- Current stock quantity of the raw material
+    FOREIGN KEY (material_id) REFERENCES raw_material(material_id) -- Links to raw_material table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    company_name VARCHAR(100), -- Name of the customer company or entity
+    contact VARCHAR(100) -- Contact information for the customer (e.g., phone, email)
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    customer_id INT, -- ID of the customer who placed the order
+    sale_id INT, -- ID of the sale associated with this order
+    order_date DATE, -- Date when the order was placed
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id), -- Links to customer table
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) -- Links to sales table
+);
+
+
+-- production.product_id can be joined with product.product_id -- Connects production batches to the product being produced.
+-- sales.product_id can be joined with product.product_id -- Ties sales to the product sold.
+-- sales.employee_id can be joined with employee.employee_id -- Links sales to the employee who made them.
+-- inventory.material_id can be joined with raw_material.material_id -- Associates inventory records with the raw materials they track.
+-- order_.customer_id can be joined with customer.customer_id -- Connects orders to the customer who placed them.
+-- order_.sale_id can be joined with sales.sale_id -- Links orders to their corresponding sale.","Identify the top 5 products by total sales amount in the last quarter of 2024, including the name of the employee who made the sale and the total quantity sold for each product. Order the results by total sales amount in descending order.","SELECT 
+    p.product_name,
+    e.first_name AS employee_first_name,
+    SUM(s.quantity_sold) AS total_quantity_sold,
+    SUM(s.total_amount) AS total_sales_amount
+FROM 
+    production p JOIN sales s ON p.product_id = s.product_id
+JOIN 
+    employee e ON s.employee_id = e.employee_id
+WHERE 
+    EXTRACT(MONTH FROM s.sale_date) = 4 AND 
+    EXTRACT(YEAR FROM s.sale_date) = 2024
+GROUP BY 
+    p.product_name, e.first_name
+ORDER BY 
+    total_sales_amount DESC
+LIMIT 5;",6
+15,codellama:7b,"    
+    CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, auto-incremented
+    supplier_name VARCHAR(100) NOT NULL, -- Name of the supplier company or entity
+    contact_info VARCHAR(100), -- Contact details (e.g., phone, email) of the supplier
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the supplier record was created
+);
+
+CREATE TABLE drug_category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug category, auto-incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the drug category (e.g., Antibiotics, Painkillers)
+);
+
+CREATE TABLE drug (
+    drug_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug, auto-incremented
+    category_id INT, -- ID of the category this drug belongs to
+    drug_name VARCHAR(100) NOT NULL, -- Name of the drug (e.g., Amoxicillin)
+    manufacturer VARCHAR(100), -- Name of the company that produces the drug
+    price DECIMAL(10,2), -- Price per unit of the drug
+    stock INT -- Current stock quantity of the drug in inventory
+);
+
+CREATE TABLE pharmacy (
+    pharmacy_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each pharmacy, auto-incremented
+    pharmacy_name VARCHAR(100) NOT NULL, -- Name of the pharmacy
+    location VARCHAR(100), -- Physical location or address of the pharmacy
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the pharmacy record was created
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the employee works
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    role VARCHAR(50) -- Employee's job role (e.g., Pharmacist, Cashier)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the sale occurred
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date the sale took place
+    total_amount DECIMAL(10,2) -- Total monetary amount of the sale
+);
+
+CREATE TABLE sale_details (
+    sale_detail_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale detail entry, auto-incremented
+    sale_id INT, -- ID of the sale this detail belongs to
+    drug_id INT, -- ID of the drug sold
+    quantity INT, -- Number of units of the drug sold
+    subtotal DECIMAL(10,2) -- Total cost for this drug in the sale (quantity * price)
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, auto-incremented
+    drug_id INT, -- ID of the drug being tracked
+    supplier_id INT, -- ID of the supplier providing the drug
+    stock_level INT, -- Current stock level of the drug from this supplier
+    last_updated DATE -- Date when the stock level was last updated
+);
+
+CREATE TABLE prescription (
+    prescription_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each prescription, auto-incremented
+    sale_id INT, -- ID of the sale associated with this prescription
+    doctor_name VARCHAR(100), -- Name of the doctor who issued the prescription
+    prescription_date DATE -- Date the prescription was issued
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy receiving the feedback
+    rating INT CHECK (rating >= 1 AND rating <= 5), -- Customer rating (1 to 5 stars)
+    comments TEXT, -- Customer comments or notes
+    feedback_date DATE -- Date the feedback was submitted
+);","List all drugs in the 'Painkillers' category with a stock below 100 units, along with their supplier names and the date when their inventory was last updated. Order results by oldest inventory update first.","SELECT d.drug_name, s.supplier_name, i.last_updated
+FROM drug d
+JOIN inventory i ON d.drug_id = i.drug_id
+JOIN supplier s ON i.supplier_id = s.supplier_id
+WHERE i.stock_level < 100
+ORDER BY i.last_updated ASC;",6
+16,codellama:7b,"CREATE TABLE store (
+    store_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each store, automatically incremented
+    store_name VARCHAR(50) NOT NULL, -- Name of the store
+    location VARCHAR(100) -- Physical location or address of the store
+);
+
+CREATE TABLE department (
+    department_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each department, automatically incremented
+    department_name VARCHAR(50) NOT NULL -- Name of the department (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the product category (e.g., TVs, Shirts)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""LED TV 55-inch"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    store_id INT, -- ID of the store where the employee works
+    department_id INT, -- ID of the department the employee is assigned to
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (department_id) REFERENCES department(department_id) -- Links to department table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    first_name VARCHAR(50), -- Customer's first name
+    email VARCHAR(100) -- Customer's email address
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    store_id INT, -- ID of the store where the sale occurred
+    employee_id INT, -- ID of the employee who processed the sale
+    customer_id INT, -- ID of the customer who made the purchase
+    sale_date DATETIME, -- Date and time when the sale took place
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id), -- Links to employee table
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id) -- Links to customer table
+);
+
+CREATE TABLE sale_items (
+    sale_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale item, automatically incremented
+    sale_id INT, -- ID of the sale this item belongs to
+    product_id INT, -- ID of the product sold
+    quantity INT, -- Number of units of the product sold
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the sale
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id), -- Links to sales table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE stock (
+    stock_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each stock record, automatically incremented
+    product_id INT, -- ID of the product being tracked
+    store_id INT, -- ID of the store holding this stock
+    quantity INT, -- Current stock quantity of the product at the store
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (store_id) REFERENCES store(store_id) -- Links to store table
+);
+
+
+
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- employee.store_id can be joined with store.store_id -- Associates employees with the store they work at.
+-- employee.department_id can be joined with department.department_id -- Links employees to their assigned department.
+-- sales.store_id can be joined with store.store_id -- Ties sales to the store where they occurred.
+-- sales.employee_id can be joined with employee.employee_id -- Connects sales to the employee who processed them.
+-- sales.customer_id can be joined with customer.customer_id -- Links sales to the customer who made the purchase.
+-- sale_items.sale_id can be joined with sales.sale_id -- Associates sale items with their corresponding sale.
+-- sale_items.product_id can be joined with product.product_id -- Connects sale items to the specific product sold.
+-- stock.product_id can be joined with product.product_id -- Ties stock records to the products they track.
+-- stock.store_id can be joined with store.store_id -- Links stock records to the store holding the inventory.","Identify the top 5 products by total sales amount in the last quarter of 2024, including their category names and the store locations where they were sold. Order the results by total sales amount in descending order."," SELECT t1.product_name, 
+        t2.department_name, 
+        SUM(t3.total_amount) AS total_sales
+ FROM product t1 
+ JOIN department t2 ON t1.category_id = t2.category_id 
+ JOIN sales t3 ON t3.product_id = t1.product_id 
+ WHERE t3.sale_date >= '2024-10-01' AND t3.sale_date < '2025-01-01'
+ GROUP BY t1.product_name, t2.department_name
+ ORDER BY total_sales DESC
+ LIMIT 5;",5
+17,codellama:7b,"CREATE TABLE user (
+    user_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each user, automatically incremented
+    username VARCHAR(50) UNIQUE, -- Unique username chosen by the user
+    email VARCHAR(100), -- User's email address
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the user account was created
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) -- Name of the product category (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Wireless Mouse"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    stock INT -- Current stock quantity of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    user_id INT, -- ID of the user who placed the order
+    order_date DATETIME, -- Date and time when the order was placed
+    status ENUM('PENDING', 'SHIPPED', 'DELIVERED'), -- Current status of the order
+    total_amount DECIMAL(10,2), -- Total monetary amount of the order
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+CREATE TABLE order_item (
+    order_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order item, automatically incremented
+    order_id INT, -- ID of the order this item belongs to
+    product_id INT, -- ID of the product ordered
+    quantity INT, -- Number of units of the product ordered
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the order
+    FOREIGN KEY (order_id) REFERENCES order_(order_id), -- Links to order_ table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE payment (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each payment, automatically incremented
+    order_id INT, -- ID of the order associated with this payment
+    amount DECIMAL(10,2), -- Amount paid for the order
+    payment_date DATETIME, -- Date and time when the payment was made
+    method ENUM('CARD', 'PAYPAL', 'COD'), -- Payment method used (Credit Card, PayPal, Cash on Delivery)
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE shipping (
+    shipping_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each shipping record, automatically incremented
+    order_id INT, -- ID of the order being shipped
+    shipping_date DATE, -- Date when the order was shipped
+    tracking_number VARCHAR(50), -- Tracking number for the shipment
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE review (
+    review_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each review, automatically incremented
+    product_id INT, -- ID of the product being reviewed
+    user_id INT, -- ID of the user who wrote the review
+    rating INT, -- Rating given by the user (e.g., 1 to 5)
+    comment TEXT, -- Text comment or feedback about the product
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- order_.user_id can be joined with user.user_id -- Ties orders to the user who placed them.
+-- order_item.order_id can be joined with order_.order_id -- Links order items to their corresponding order.
+-- order_item.product_id can be joined with product.product_id -- Connects order items to the specific product ordered.
+-- payment.order_id can be joined with order_.order_id -- Associates payments with the order they cover.
+-- shipping.order_id can be joined with order_.order_id -- Links shipping records to the order being shipped.
+-- review.product_id can be joined with product.product_id -- Ties reviews to the product being reviewed.
+-- review.user_id can be joined with user.user_id -- Connects reviews to the user who wrote them.","Find the top 3 products with the highest average rating from user reviews, including their category names and total sales amounts. Only consider products that have been ordered at least 10 times. Order the results by average rating in descending order.","SELECT 
+  p.product_name,
+  AVG(r.rating) AS average_rating,
+  SUM(oi.quantity * oi.subtotal) AS total_sales
+FROM 
+  product p
+JOIN 
+  order_item oi ON p.product_id = oi.product_id
+JOIN 
+  review r ON p.product_id = r.product_id
+WHERE 
+  oi.quantity >= 10 AND
+  r.rating IS NOT NULL AND
+  r.comment IS NOT NULL
+GROUP BY 
+  p.product_name,
+  p.category_id
+HAVING 
+  AVG(r.rating) > 3
+ORDER BY 
+  average_rating DESC;
+```
+This query joins the `product` table with the `order_item` and `review` tables using the appropriate foreign keys. The `WHERE` clause filters the results to include only products that have been ordered at least 10 times, have a rating greater than 3, and have non-empty reviews. The `GROUP BY` clause groups the results by product name and category ID, and the `HAVING` clause filters the results to include only those with an average rating of more than 3. Finally, the `ORDER BY` clause orders the results by average rating in descending order.",5
+18,codellama:7b,"CREATE TABLE agent (
+    agent_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each agent, automatically incremented
+    first_name VARCHAR(50), -- Agent's first name
+    last_name VARCHAR(50), -- Agent's last name
+    phone VARCHAR(20) -- Agent's phone number
+);
+
+CREATE TABLE property_type (
+    type_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property type, automatically incremented
+    type_name VARCHAR(50) NOT NULL -- Name of the property type (e.g., House, Apartment)
+);
+
+CREATE TABLE property (
+    property_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property, automatically incremented
+    type_id INT, -- ID of the property type this property belongs to
+    address TEXT, -- Full address of the property
+    price DECIMAL(12,2), -- Listed price of the property
+    status ENUM('AVAILABLE', 'SOLD', 'PENDING'), -- Current status of the property
+    FOREIGN KEY (type_id) REFERENCES property_type(type_id) -- Links to property_type table
+);
+
+CREATE TABLE client (
+    client_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each client, automatically incremented
+    first_name VARCHAR(50), -- Client's first name
+    last_name VARCHAR(50), -- Client's last name
+    email VARCHAR(100) -- Client's email address
+);
+
+CREATE TABLE sale (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    property_id INT, -- ID of the property sold
+    agent_id INT, -- ID of the agent who facilitated the sale
+    client_id INT, -- ID of the client who purchased the property
+    sale_date DATE, -- Date when the sale was completed
+    sale_price DECIMAL(12,2), -- Final sale price of the property
+    FOREIGN KEY (property_id) REFERENCES property(property_id), -- Links to property table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+CREATE TABLE commission (
+    commission_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each commission record, automatically incremented
+    sale_id INT, -- ID of the sale this commission is tied to
+    agent_id INT, -- ID of the agent receiving the commission
+    amount DECIMAL(10,2), -- Commission amount earned by the agent
+    FOREIGN KEY (sale_id) REFERENCES sale(sale_id), -- Links to sale table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id) -- Links to agent table
+);
+
+CREATE TABLE appointment (
+    appointment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each appointment, automatically incremented
+    agent_id INT, -- ID of the agent conducting the appointment
+    client_id INT, -- ID of the client attending the appointment
+    property_id INT, -- ID of the property being shown or discussed
+    appointment_date DATETIME, -- Date and time of the appointment
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id), -- Links to client table
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE expense (
+    expense_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each expense record, automatically incremented
+    property_id INT, -- ID of the property associated with the expense
+    amount DECIMAL(10,2), -- Amount of the expense
+    description TEXT, -- Details or reason for the expense (e.g., repairs, marketing)
+    expense_date DATE, -- Date when the expense was incurred
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, automatically incremented
+    client_id INT, -- ID of the client providing the feedback
+    rating INT, -- Rating given by the client (e.g., 1 to 5)
+    comments TEXT, -- Additional comments or notes from the client
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+
+-- property.type_id can be joined with property_type.type_id -- Connects each property to its type.
+-- sale.property_id can be joined with property.property_id -- Ties sales to the property sold.
+-- sale.agent_id can be joined with agent.agent_id -- Links sales to the agent who facilitated them.
+-- sale.client_id can be joined with client.client_id -- Connects sales to the client who purchased the property.
+-- commission.sale_id can be joined with sale.sale_id -- Associates commissions with their corresponding sale.
+-- commission.agent_id can be joined with agent.agent_id -- Links commissions to the agent receiving them.
+-- appointment.agent_id can be joined with agent.agent_id -- Ties appointments to the agent conducting them.
+-- appointment.client_id can be joined with client.client_id -- Connects appointments to the client attending them.
+-- appointment.property_id can be joined with property.property_id -- Links appointments to the property being shown.
+-- expense.property_id can be joined with property.property_id -- Associates expenses with the property they relate to.
+-- feedback.client_id can be joined with client.client_id -- Connects feedback to the client providing it.","List all agents who have facilitated sales of properties with a total sale price exceeding $500,000 in the last year. Include their full names, the number of properties sold, and the total commission earned. Order the results by total commission in descending order.","SELECT a.agent_id, a.first_name, a.last_name, COUNT(p.property_id) AS properties_sold, SUM(p.price) AS total_sale_price, SUM(c.amount) AS total_commission
+FROM agent AS a
+JOIN sale AS s ON a.agent_id = s.agent_id
+JOIN property AS p ON p.property_id = s.property_id
+JOIN commission AS c ON c.sale_id = s.sale_id AND c.agent_id = a.agent_id
+WHERE p.price >= 500000
+GROUP BY a.agent_id, a.first_name, a.last_name
+ORDER BY total_commission DESC;",6
+19,codellama:7b,"CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, automatically incremented
+    supplier_name VARCHAR(100), -- Name of the supplier company or entity
+    contact VARCHAR(100) -- Contact information for the supplier (e.g., phone, email)
+);
+
+CREATE TABLE raw_material (
+    material_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each raw material, automatically incremented
+    material_name VARCHAR(100), -- Name of the raw material (e.g., Steel, Cotton)
+    unit_cost DECIMAL(10,2) -- Cost per unit of the raw material
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Steel Table"")
+    sale_price DECIMAL(10,2) -- Price at which the product is sold per unit
+);
+
+CREATE TABLE production (
+    production_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each production batch, automatically incremented
+    product_id INT, -- ID of the product being produced
+    production_date DATE, -- Date when the production occurred
+    quantity INT, -- Number of units produced in this batch
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    first_name VARCHAR(50), -- Employee's first name
+    role VARCHAR(50) -- Employee's job role (e.g., Salesperson, Production Worker)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    product_id INT, -- ID of the product sold
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date when the sale took place
+    quantity_sold INT, -- Number of units sold
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) -- Links to employee table
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, automatically incremented
+    material_id INT, -- ID of the raw material being tracked
+    stock_level INT, -- Current stock quantity of the raw material
+    FOREIGN KEY (material_id) REFERENCES raw_material(material_id) -- Links to raw_material table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    company_name VARCHAR(100), -- Name of the customer company or entity
+    contact VARCHAR(100) -- Contact information for the customer (e.g., phone, email)
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    customer_id INT, -- ID of the customer who placed the order
+    sale_id INT, -- ID of the sale associated with this order
+    order_date DATE, -- Date when the order was placed
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id), -- Links to customer table
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) -- Links to sales table
+);
+
+
+-- production.product_id can be joined with product.product_id -- Connects production batches to the product being produced.
+-- sales.product_id can be joined with product.product_id -- Ties sales to the product sold.
+-- sales.employee_id can be joined with employee.employee_id -- Links sales to the employee who made them.
+-- inventory.material_id can be joined with raw_material.material_id -- Associates inventory records with the raw materials they track.
+-- order_.customer_id can be joined with customer.customer_id -- Connects orders to the customer who placed them.
+-- order_.sale_id can be joined with sales.sale_id -- Links orders to their corresponding sale.","Identify the top 5 products by total sales amount in the last quarter of 2024, including the name of the employee who made the sale and the total quantity sold for each product. Order the results by total sales amount in descending order.","SELECT product.product_name, SUM(production.quantity) AS total_produced, SUM(sales.quantity_sold) AS total_sold, 
+    CAST(SUM(sales.total_amount) AS FLOAT)/CAST(SUM(production.quantity) AS FLOAT) AS profit_margin
+FROM product 
+JOIN production ON production.product_id = product.product_id
+JOIN sales ON sales.product_id = product.product_id
+GROUP BY product.product_name
+ORDER BY SUM(sales.total_amount)/SUM(production.quantity) DESC;
+```
+This query joins the `product` table with the `production` and `sales` tables on the `product_id` column, and uses a GROUP BY clause to group the results by product name. The SUM function is used to calculate the total quantity produced and sold for each product, and the CAST function is used to convert the result of the division operation into a float value to maintain precision. The query also includes an ORDER BY clause to sort the results in descending order based on the profit margin.",3
+20,llama3:latest,"    
+    CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, auto-incremented
+    supplier_name VARCHAR(100) NOT NULL, -- Name of the supplier company or entity
+    contact_info VARCHAR(100), -- Contact details (e.g., phone, email) of the supplier
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the supplier record was created
+);
+
+CREATE TABLE drug_category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug category, auto-incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the drug category (e.g., Antibiotics, Painkillers)
+);
+
+CREATE TABLE drug (
+    drug_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each drug, auto-incremented
+    category_id INT, -- ID of the category this drug belongs to
+    drug_name VARCHAR(100) NOT NULL, -- Name of the drug (e.g., Amoxicillin)
+    manufacturer VARCHAR(100), -- Name of the company that produces the drug
+    price DECIMAL(10,2), -- Price per unit of the drug
+    stock INT -- Current stock quantity of the drug in inventory
+);
+
+CREATE TABLE pharmacy (
+    pharmacy_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each pharmacy, auto-incremented
+    pharmacy_name VARCHAR(100) NOT NULL, -- Name of the pharmacy
+    location VARCHAR(100), -- Physical location or address of the pharmacy
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the pharmacy record was created
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the employee works
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    role VARCHAR(50) -- Employee's job role (e.g., Pharmacist, Cashier)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy where the sale occurred
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date the sale took place
+    total_amount DECIMAL(10,2) -- Total monetary amount of the sale
+);
+
+CREATE TABLE sale_details (
+    sale_detail_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale detail entry, auto-incremented
+    sale_id INT, -- ID of the sale this detail belongs to
+    drug_id INT, -- ID of the drug sold
+    quantity INT, -- Number of units of the drug sold
+    subtotal DECIMAL(10,2) -- Total cost for this drug in the sale (quantity * price)
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, auto-incremented
+    drug_id INT, -- ID of the drug being tracked
+    supplier_id INT, -- ID of the supplier providing the drug
+    stock_level INT, -- Current stock level of the drug from this supplier
+    last_updated DATE -- Date when the stock level was last updated
+);
+
+CREATE TABLE prescription (
+    prescription_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each prescription, auto-incremented
+    sale_id INT, -- ID of the sale associated with this prescription
+    doctor_name VARCHAR(100), -- Name of the doctor who issued the prescription
+    prescription_date DATE -- Date the prescription was issued
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, auto-incremented
+    pharmacy_id INT, -- ID of the pharmacy receiving the feedback
+    rating INT CHECK (rating >= 1 AND rating <= 5), -- Customer rating (1 to 5 stars)
+    comments TEXT, -- Customer comments or notes
+    feedback_date DATE -- Date the feedback was submitted
+);","List all drugs in the 'Painkillers' category with a stock below 100 units, along with their supplier names and the date when their inventory was last updated. Order results by oldest inventory update first.","```
+SELECT d.drug_name, s.supplier_name, i.last_updated 
+FROM drug d 
+JOIN category c ON d.category_id = c.category_id AND c.category_name = 'Painkillers' 
+JOIN inventory i ON d.drug_id = i.drug_id 
+JOIN supplier s ON i.supplier_id = s.supplier_id 
+WHERE d.stock < 100 
+ORDER BY i.last_updated;
+```",9
+21,llama3:latest,"CREATE TABLE store (
+    store_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each store, automatically incremented
+    store_name VARCHAR(50) NOT NULL, -- Name of the store
+    location VARCHAR(100) -- Physical location or address of the store
+);
+
+CREATE TABLE department (
+    department_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each department, automatically incremented
+    department_name VARCHAR(50) NOT NULL -- Name of the department (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) NOT NULL -- Name of the product category (e.g., TVs, Shirts)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""LED TV 55-inch"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    store_id INT, -- ID of the store where the employee works
+    department_id INT, -- ID of the department the employee is assigned to
+    first_name VARCHAR(50), -- Employee's first name
+    last_name VARCHAR(50), -- Employee's last name
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (department_id) REFERENCES department(department_id) -- Links to department table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    first_name VARCHAR(50), -- Customer's first name
+    email VARCHAR(100) -- Customer's email address
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    store_id INT, -- ID of the store where the sale occurred
+    employee_id INT, -- ID of the employee who processed the sale
+    customer_id INT, -- ID of the customer who made the purchase
+    sale_date DATETIME, -- Date and time when the sale took place
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (store_id) REFERENCES store(store_id), -- Links to store table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id), -- Links to employee table
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id) -- Links to customer table
+);
+
+CREATE TABLE sale_items (
+    sale_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale item, automatically incremented
+    sale_id INT, -- ID of the sale this item belongs to
+    product_id INT, -- ID of the product sold
+    quantity INT, -- Number of units of the product sold
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the sale
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id), -- Links to sales table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE stock (
+    stock_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each stock record, automatically incremented
+    product_id INT, -- ID of the product being tracked
+    store_id INT, -- ID of the store holding this stock
+    quantity INT, -- Current stock quantity of the product at the store
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (store_id) REFERENCES store(store_id) -- Links to store table
+);
+
+
+
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- employee.store_id can be joined with store.store_id -- Associates employees with the store they work at.
+-- employee.department_id can be joined with department.department_id -- Links employees to their assigned department.
+-- sales.store_id can be joined with store.store_id -- Ties sales to the store where they occurred.
+-- sales.employee_id can be joined with employee.employee_id -- Connects sales to the employee who processed them.
+-- sales.customer_id can be joined with customer.customer_id -- Links sales to the customer who made the purchase.
+-- sale_items.sale_id can be joined with sales.sale_id -- Associates sale items with their corresponding sale.
+-- sale_items.product_id can be joined with product.product_id -- Connects sale items to the specific product sold.
+-- stock.product_id can be joined with product.product_id -- Ties stock records to the products they track.
+-- stock.store_id can be joined with store.store_id -- Links stock records to the store holding the inventory.","Identify the top 5 products by total sales amount in the last quarter of 2024, including their category names and the store locations where they were sold. Order the results by total sales amount in descending order.","```
+SELECT 
+  t1.product_name, 
+  t2.category_name, 
+  t3.store_name, 
+  SUM(t4.subtotal) AS total_sales_amount
+FROM 
+  product t1 
+  JOIN category t2 ON t1.category_id = t2.category_id 
+  JOIN store t3 ON t1.store_id = t3.store_id 
+  JOIN sale_items t4 ON t1.product_id = t4.product_id 
+WHERE 
+  EXTRACT(quarter FROM t4.sale_date) = 4 AND 
+  EXTRACT(year FROM t4.sale_date) = 2024
+GROUP BY 
+  t1.product_name, 
+  t2.category_name, 
+  t3.store_name
+ORDER BY 
+  SUM(t4.subtotal) DESC
+LIMIT 5;
+```",7
+22,llama3:latest,"CREATE TABLE user (
+    user_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each user, automatically incremented
+    username VARCHAR(50) UNIQUE, -- Unique username chosen by the user
+    email VARCHAR(100), -- User's email address
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Date and time when the user account was created
+);
+
+CREATE TABLE category (
+    category_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product category, automatically incremented
+    category_name VARCHAR(50) -- Name of the product category (e.g., Electronics, Clothing)
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    category_id INT, -- ID of the category this product belongs to
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Wireless Mouse"")
+    price DECIMAL(10,2), -- Price per unit of the product
+    stock INT -- Current stock quantity of the product
+    FOREIGN KEY (category_id) REFERENCES category(category_id) -- Links to category table
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    user_id INT, -- ID of the user who placed the order
+    order_date DATETIME, -- Date and time when the order was placed
+    status ENUM('PENDING', 'SHIPPED', 'DELIVERED'), -- Current status of the order
+    total_amount DECIMAL(10,2), -- Total monetary amount of the order
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+CREATE TABLE order_item (
+    order_item_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order item, automatically incremented
+    order_id INT, -- ID of the order this item belongs to
+    product_id INT, -- ID of the product ordered
+    quantity INT, -- Number of units of the product ordered
+    subtotal DECIMAL(10,2), -- Subtotal amount for this specific product in the order
+    FOREIGN KEY (order_id) REFERENCES order_(order_id), -- Links to order_ table
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE payment (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each payment, automatically incremented
+    order_id INT, -- ID of the order associated with this payment
+    amount DECIMAL(10,2), -- Amount paid for the order
+    payment_date DATETIME, -- Date and time when the payment was made
+    method ENUM('CARD', 'PAYPAL', 'COD'), -- Payment method used (Credit Card, PayPal, Cash on Delivery)
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE shipping (
+    shipping_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each shipping record, automatically incremented
+    order_id INT, -- ID of the order being shipped
+    shipping_date DATE, -- Date when the order was shipped
+    tracking_number VARCHAR(50), -- Tracking number for the shipment
+    FOREIGN KEY (order_id) REFERENCES order_(order_id) -- Links to order_ table
+);
+
+CREATE TABLE review (
+    review_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each review, automatically incremented
+    product_id INT, -- ID of the product being reviewed
+    user_id INT, -- ID of the user who wrote the review
+    rating INT, -- Rating given by the user (e.g., 1 to 5)
+    comment TEXT, -- Text comment or feedback about the product
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (user_id) REFERENCES user(user_id) -- Links to user table
+);
+
+
+
+-- product.category_id can be joined with category.category_id -- Connects each product to its category.
+-- order_.user_id can be joined with user.user_id -- Ties orders to the user who placed them.
+-- order_item.order_id can be joined with order_.order_id -- Links order items to their corresponding order.
+-- order_item.product_id can be joined with product.product_id -- Connects order items to the specific product ordered.
+-- payment.order_id can be joined with order_.order_id -- Associates payments with the order they cover.
+-- shipping.order_id can be joined with order_.order_id -- Links shipping records to the order being shipped.
+-- review.product_id can be joined with product.product_id -- Ties reviews to the product being reviewed.
+-- review.user_id can be joined with user.user_id -- Connects reviews to the user who wrote them.","Find the top 3 products with the highest average rating from user reviews, including their category names and total sales amounts. Only consider products that have been ordered at least 10 times. Order the results by average rating in descending order.","```
+SELECT p.product_name, c.category_name, SUM(oi.quantity) AS total_sales, AVG(r.rating) AS average_rating
+FROM product p 
+JOIN category c ON p.category_id = c.category_id
+JOIN order_item oi ON p.product_id = oi.product_id
+JOIN review r ON p.product_id = r.product_id
+WHERE oi.order_id IN (
+  SELECT o.order_id 
+  FROM order_ o 
+  GROUP BY o.order_id 
+  HAVING COUNT(o.order_id) >= 10 
+)
+GROUP BY p.product_name, c.category_name
+ORDER BY AVG(r.rating) DESC
+LIMIT 3;
+```",6
+23,llama3:latest,"CREATE TABLE agent (
+    agent_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each agent, automatically incremented
+    first_name VARCHAR(50), -- Agent's first name
+    last_name VARCHAR(50), -- Agent's last name
+    phone VARCHAR(20) -- Agent's phone number
+);
+
+CREATE TABLE property_type (
+    type_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property type, automatically incremented
+    type_name VARCHAR(50) NOT NULL -- Name of the property type (e.g., House, Apartment)
+);
+
+CREATE TABLE property (
+    property_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each property, automatically incremented
+    type_id INT, -- ID of the property type this property belongs to
+    address TEXT, -- Full address of the property
+    price DECIMAL(12,2), -- Listed price of the property
+    status ENUM('AVAILABLE', 'SOLD', 'PENDING'), -- Current status of the property
+    FOREIGN KEY (type_id) REFERENCES property_type(type_id) -- Links to property_type table
+);
+
+CREATE TABLE client (
+    client_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each client, automatically incremented
+    first_name VARCHAR(50), -- Client's first name
+    last_name VARCHAR(50), -- Client's last name
+    email VARCHAR(100) -- Client's email address
+);
+
+CREATE TABLE sale (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    property_id INT, -- ID of the property sold
+    agent_id INT, -- ID of the agent who facilitated the sale
+    client_id INT, -- ID of the client who purchased the property
+    sale_date DATE, -- Date when the sale was completed
+    sale_price DECIMAL(12,2), -- Final sale price of the property
+    FOREIGN KEY (property_id) REFERENCES property(property_id), -- Links to property table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+CREATE TABLE commission (
+    commission_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each commission record, automatically incremented
+    sale_id INT, -- ID of the sale this commission is tied to
+    agent_id INT, -- ID of the agent receiving the commission
+    amount DECIMAL(10,2), -- Commission amount earned by the agent
+    FOREIGN KEY (sale_id) REFERENCES sale(sale_id), -- Links to sale table
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id) -- Links to agent table
+);
+
+CREATE TABLE appointment (
+    appointment_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each appointment, automatically incremented
+    agent_id INT, -- ID of the agent conducting the appointment
+    client_id INT, -- ID of the client attending the appointment
+    property_id INT, -- ID of the property being shown or discussed
+    appointment_date DATETIME, -- Date and time of the appointment
+    FOREIGN KEY (agent_id) REFERENCES agent(agent_id), -- Links to agent table
+    FOREIGN KEY (client_id) REFERENCES client(client_id), -- Links to client table
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE expense (
+    expense_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each expense record, automatically incremented
+    property_id INT, -- ID of the property associated with the expense
+    amount DECIMAL(10,2), -- Amount of the expense
+    description TEXT, -- Details or reason for the expense (e.g., repairs, marketing)
+    expense_date DATE, -- Date when the expense was incurred
+    FOREIGN KEY (property_id) REFERENCES property(property_id) -- Links to property table
+);
+
+CREATE TABLE feedback (
+    feedback_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each feedback entry, automatically incremented
+    client_id INT, -- ID of the client providing the feedback
+    rating INT, -- Rating given by the client (e.g., 1 to 5)
+    comments TEXT, -- Additional comments or notes from the client
+    FOREIGN KEY (client_id) REFERENCES client(client_id) -- Links to client table
+);
+
+
+-- property.type_id can be joined with property_type.type_id -- Connects each property to its type.
+-- sale.property_id can be joined with property.property_id -- Ties sales to the property sold.
+-- sale.agent_id can be joined with agent.agent_id -- Links sales to the agent who facilitated them.
+-- sale.client_id can be joined with client.client_id -- Connects sales to the client who purchased the property.
+-- commission.sale_id can be joined with sale.sale_id -- Associates commissions with their corresponding sale.
+-- commission.agent_id can be joined with agent.agent_id -- Links commissions to the agent receiving them.
+-- appointment.agent_id can be joined with agent.agent_id -- Ties appointments to the agent conducting them.
+-- appointment.client_id can be joined with client.client_id -- Connects appointments to the client attending them.
+-- appointment.property_id can be joined with property.property_id -- Links appointments to the property being shown.
+-- expense.property_id can be joined with property.property_id -- Associates expenses with the property they relate to.
+-- feedback.client_id can be joined with client.client_id -- Connects feedback to the client providing it.","List all agents who have facilitated sales of properties with a total sale price exceeding $500,000 in the last year. Include their full names, the number of properties sold, and the total commission earned. Order the results by total commission in descending order.","```
+SELECT a.first_name, a.last_name, COUNT(s.sale_id) AS num_sales, SUM(c.amount) AS total_commission
+FROM agent a
+JOIN commission c ON a.agent_id = c.agent_id
+JOIN sale s ON c.sale_id = s.sale_id
+WHERE s.sale_price > 500000 AND s.sale_date >= DATE_SUB(CURRENT_DATE, INTERVAL 1 YEAR)
+GROUP BY a.first_name, a.last_name
+ORDER BY total_commission DESC;
+```",9
+24,llama3:latest,"CREATE TABLE supplier (
+    supplier_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each supplier, automatically incremented
+    supplier_name VARCHAR(100), -- Name of the supplier company or entity
+    contact VARCHAR(100) -- Contact information for the supplier (e.g., phone, email)
+);
+
+CREATE TABLE raw_material (
+    material_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each raw material, automatically incremented
+    material_name VARCHAR(100), -- Name of the raw material (e.g., Steel, Cotton)
+    unit_cost DECIMAL(10,2) -- Cost per unit of the raw material
+);
+
+CREATE TABLE product (
+    product_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each product, automatically incremented
+    product_name VARCHAR(100), -- Name of the product (e.g., ""Steel Table"")
+    sale_price DECIMAL(10,2) -- Price at which the product is sold per unit
+);
+
+CREATE TABLE production (
+    production_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each production batch, automatically incremented
+    product_id INT, -- ID of the product being produced
+    production_date DATE, -- Date when the production occurred
+    quantity INT, -- Number of units produced in this batch
+    FOREIGN KEY (product_id) REFERENCES product(product_id) -- Links to product table
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each employee, automatically incremented
+    first_name VARCHAR(50), -- Employee's first name
+    role VARCHAR(50) -- Employee's job role (e.g., Salesperson, Production Worker)
+);
+
+CREATE TABLE sales (
+    sale_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each sale, automatically incremented
+    product_id INT, -- ID of the product sold
+    employee_id INT, -- ID of the employee who made the sale
+    sale_date DATE, -- Date when the sale took place
+    quantity_sold INT, -- Number of units sold
+    total_amount DECIMAL(10,2), -- Total monetary amount of the sale
+    FOREIGN KEY (product_id) REFERENCES product(product_id), -- Links to product table
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) -- Links to employee table
+);
+
+CREATE TABLE inventory (
+    inventory_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each inventory record, automatically incremented
+    material_id INT, -- ID of the raw material being tracked
+    stock_level INT, -- Current stock quantity of the raw material
+    FOREIGN KEY (material_id) REFERENCES raw_material(material_id) -- Links to raw_material table
+);
+
+CREATE TABLE customer (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each customer, automatically incremented
+    company_name VARCHAR(100), -- Name of the customer company or entity
+    contact VARCHAR(100) -- Contact information for the customer (e.g., phone, email)
+);
+
+CREATE TABLE order_ (
+    order_id INT PRIMARY KEY AUTO_INCREMENT, -- Unique ID for each order, automatically incremented
+    customer_id INT, -- ID of the customer who placed the order
+    sale_id INT, -- ID of the sale associated with this order
+    order_date DATE, -- Date when the order was placed
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id), -- Links to customer table
+    FOREIGN KEY (sale_id) REFERENCES sales(sale_id) -- Links to sales table
+);
+
+
+-- production.product_id can be joined with product.product_id -- Connects production batches to the product being produced.
+-- sales.product_id can be joined with product.product_id -- Ties sales to the product sold.
+-- sales.employee_id can be joined with employee.employee_id -- Links sales to the employee who made them.
+-- inventory.material_id can be joined with raw_material.material_id -- Associates inventory records with the raw materials they track.
+-- order_.customer_id can be joined with customer.customer_id -- Connects orders to the customer who placed them.
+-- order_.sale_id can be joined with sales.sale_id -- Links orders to their corresponding sale.","Identify the top 5 products by total sales amount in the last quarter of 2024, including the name of the employee who made the sale and the total quantity sold for each product. Order the results by total sales amount in descending order.","SELECT 
+  p.product_name, 
+  e.first_name, 
+  SUM(s.quantity_sold) AS total_quantity_sold, 
+  SUM(s.total_amount) AS total_sales_amount
+FROM 
+  sales s 
+JOIN 
+  product p ON s.product_id = p.product_id 
+JOIN 
+  employee e ON s.employee_id = e.employee_id 
+WHERE 
+  EXTRACT(YEAR FROM s.sale_date) = 2024 AND 
+  EXTRACT(QUARTER FROM s.sale_date) = 4
+GROUP BY 
+  p.product_name, 
+  e.first_name
+ORDER BY 
+  total_sales_amount DESC
+LIMIT 
+  5;",8

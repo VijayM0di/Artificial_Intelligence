@@ -1,0 +1,113 @@
+graph TD
+    A[Application Start] --> B[Setup Database]
+    B --> C[Download & Update travel2.sqlite]
+    C --> D[Load FAQ Data from Swiss Airlines]
+    D --> E[Create Gemini Vector Store]
+    E --> F[Initialize GeminiAssistant]
+    F --> G[Create LangGraph Workflow]
+    
+    G --> H{Choose Mode}
+    H -->|Single Example| I[Run Example]
+    H -->|Interactive Chat| J[Interactive Mode]
+    
+    subgraph "LangGraph Architecture"
+        K[StateGraph Creation]
+        K --> L[Add Assistant Node]
+        L --> M[Add Edges: START → Assistant → END]
+        M --> N[Add Memory Saver]
+        N --> O[Compile Graph]
+    end
+    
+    G --> K
+    
+    subgraph "State Management"
+        P[State TypedDict]
+        P --> Q[messages: List of BaseMessage]
+        P --> R[user_info: Optional str]
+    end
+    
+    subgraph "GeminiAssistant Process"
+        S[Receive State] --> T[Extract Messages & User Info]
+        T --> U[Build Conversation Context]
+        U --> V[Create System Prompt]
+        V --> W[Generate Gemini Response]
+        W --> X{Tool Calls Detected?}
+        
+        X -->|Yes| Y[Extract Tool Calls]
+        Y --> Z[Execute Tools]
+        Z --> AA[Generate Final Response with Tool Results]
+        AA --> BB[Return AIMessage]
+        
+        X -->|No| BB[Return AIMessage]
+    end
+    
+    subgraph "Available Tools"
+        CC[lookup_policy]
+        CC --> DD[Query FAQ with Gemini Embeddings]
+        
+        EE[fetch_user_flight_information]
+        EE --> FF[SQL Query for User Flights]
+        
+        GG[search_flights]
+        GG --> HH[SQL Query with Filters]
+    end
+    
+    subgraph "Vector Store Operations"
+        II[GeminiVectorStoreRetriever]
+        II --> JJ[Create Embeddings with Gemini]
+        JJ --> KK[Store Documents & Vectors]
+        KK --> LL[Query with Similarity Search]
+    end
+    
+    I --> MM[Create Initial State with HumanMessage]
+    MM --> NN[Invoke Graph with Config]
+    NN --> S
+    
+    J --> OO[Initialize Empty State]
+    OO --> PP[User Input Loop]
+    PP --> QQ{User Input}
+    QQ -->|quit/exit| RR[End Session]
+    QQ -->|Valid Input| SS[Add HumanMessage to State]
+    SS --> TT[Invoke Graph]
+    TT --> S
+    BB --> UU[Update State]
+    UU --> VV[Display Response]
+    VV --> PP
+    
+    Z --> CC
+    Z --> EE  
+    Z --> GG
+    
+    DD --> II
+    
+    subgraph "Database Schema"
+        WW[travel2.sqlite]
+        WW --> XX[tickets table]
+        WW --> YY[flights table] 
+        WW --> ZZ[boarding_passes table]
+        WW --> AAA[bookings table]
+    end
+    
+    FF --> WW
+    HH --> WW
+    
+    subgraph "Configuration"
+        BBB[Environment Setup]
+        BBB --> CCC[GEMINI_API_KEY]
+        CCC --> DDD[genai.configure]
+        
+        EEE[Thread Configuration]
+        EEE --> FFF[configurable.thread_id]
+    end
+    
+    F --> BBB
+    NN --> EEE
+    TT --> EEE
+    
+    style A fill:#e1f5fe
+    style S fill:#f3e5f5
+    style CC fill:#e8f5e8
+    style EE fill:#e8f5e8
+    style GG fill:#e8f5e8
+    style II fill:#fff3e0
+    style WW fill:#fce4ec

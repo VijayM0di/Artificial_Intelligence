@@ -1,0 +1,180 @@
+graph TD
+    A[Healthcare Bot Start] --> B[Initialize Components]
+    B --> C[Setup MSSQL Database Connection]
+    C --> D[Configure Gemini AI Model]
+    D --> E[Create LangGraph Workflow]
+    E --> F[Initialize Memory Saver]
+    
+    F --> G{User Input Mode}
+    G -->|Interactive Chat| H[Interactive Session]
+    G -->|API Call| I[API Endpoint]
+    
+    subgraph "Core Components"
+        J[HealthcareState]
+        J --> K[messages: List of BaseMessage]
+        J --> L[patient_id: Optional str]
+        J --> M[conversation_type: str]
+        J --> N[medical_context: Dict]
+        J --> O[urgency_level: str]
+        J --> P[escalation_needed: bool]
+    end
+    
+    H --> Q[Create Initial State]
+    I --> Q
+    Q --> R[Add User Message to State]
+    R --> S[Invoke Healthcare Assistant]
+    
+    subgraph "Healthcare Assistant Processing"
+        T[Receive HealthcareState]
+        T --> U[Extract Messages & Context]
+        U --> V[Classify Conversation Type]
+        V --> W{Conversation Type}
+        
+        W -->|Medical Inquiry| X[Medical Reasoning Mode]
+        W -->|Appointment| Y[Appointment Management Mode]
+        W -->|Test Results| Z[Test Results Mode]
+        W -->|Emergency| AA[Emergency Protocol Mode]
+        W -->|General| BB[General Healthcare Mode]
+        
+        X --> CC[Generate Medical System Prompt]
+        Y --> DD[Generate Appointment System Prompt]
+        Z --> EE[Generate Test Results System Prompt]
+        AA --> FF[Generate Emergency System Prompt]
+        BB --> GG[Generate General System Prompt]
+        
+        CC --> HH[Build Conversation Context]
+        DD --> HH
+        EE --> HH
+        FF --> HH
+        GG --> HH
+        
+        HH --> II[Generate Gemini Response]
+        II --> JJ{Tool Calls Detected?}
+        
+        JJ -->|Yes| KK[Extract Tool Calls]
+        JJ -->|No| LL[Assess Urgency Level]
+        
+        KK --> MM[Execute Database Tools]
+        MM --> NN[Execute Medical Analysis Tools]
+        NN --> OO[Generate Enhanced Response]
+        OO --> LL
+        
+        LL --> PP[Update Medical Context]
+        PP --> QQ[Check Escalation Need]
+        QQ --> RR[Return Updated State]
+    end
+    
+    S --> T
+    
+    subgraph "Database Tools - MSSQL"
+        SS[HealthcareDatabaseTools]
+        SS --> TT[get_patient_info]
+        TT --> UU[Query: patients, medical_history, medications, appointments]
+        
+        SS --> VV[search_doctors]
+        VV --> WW[Query: doctors table with filters]
+        
+        SS --> XX[book_appointment]
+        XX --> YY[Insert: appointments table]
+        
+        SS --> ZZ[get_test_results]
+        ZZ --> AAA[Query: test_results table]
+    end
+    
+    subgraph "Medical Knowledge Base"
+        BBB[MedicalKnowledgeBase]
+        BBB --> CCC[analyze_symptoms]
+        CCC --> DDD[Gemini Medical Analysis]
+        DDD --> EEE[Assess Urgency Level]
+        EEE --> FFF[Check Emergency Keywords]
+        FFF --> GGG[Generate Medical Insights]
+    end
+    
+    MM --> SS
+    NN --> BBB
+    
+    subgraph "Conversation Flow Management"
+        HHH[Conversation Classification]
+        HHH --> III[Medical Inquiry: Symptoms, conditions, diagnoses]
+        HHH --> JJJ[Appointment: Schedule, reschedule, cancel]
+        HHH --> KKK[Test Results: Lab results, imaging, reports]
+        HHH --> LLL[Emergency: Urgent symptoms, critical conditions]
+        HHH --> MMM[Prescription: Medications, refills, dosages]
+        HHH --> NNN[Billing: Insurance, payments, coverage]
+        HHH --> OOO[General: Health information, preventive care]
+    end
+    
+    V --> HHH
+    
+    subgraph "Safety & Compliance"
+        PPP[Medical Disclaimers]
+        PPP --> QQQ[Professional Medical Advice Warning]
+        QQQ --> RRR[Emergency Service Recommendations]
+        
+        SSS[Data Privacy]
+        SSS --> TTT[Patient Data Encryption]
+        TTT --> UUU[HIPAA Compliance Checks]
+        UUU --> VVV[Audit Logging]
+    end
+    
+    RR --> WWW[Add AI Message to State]
+    WWW --> XXX{Escalation Needed?}
+    
+    XXX -->|Yes| YYY[Trigger Emergency Protocol]
+    XXX -->|No| ZZZ[Display Response to User]
+    
+    YYY --> AAAA[Notify Healthcare Provider]
+    AAAA --> BBBB[Log Emergency Event]
+    BBBB --> ZZZ
+    
+    ZZZ --> CCCC{Continue Conversation?}
+    CCCC -->|Yes| DDDD[Wait for Next User Input]
+    CCCC -->|No| EEEE[End Session]
+    
+    DDDD --> R
+    EEEE --> FFFF[Save Conversation History]
+    FFFF --> GGGG[Generate Session Summary]
+    
+    subgraph "Database Schema"
+        HHHH[MSSQL Server Database]
+        HHHH --> IIII[patients table]
+        HHHH --> JJJJ[doctors table]
+        HHHH --> KKKK[appointments table]
+        HHHH --> LLLL[medical_history table]
+        HHHH --> MMMM[medications table]
+        HHHH --> NNNN[patient_medications table]
+        HHHH --> OOOO[test_results table]
+    end
+    
+    UU --> HHHH
+    WW --> HHHH
+    YY --> HHHH
+    AAA --> HHHH
+    
+    subgraph "Memory Management"
+        PPPP[MemorySaver]
+        PPPP --> QQQQ[Thread-based Conversation Storage]
+        QQQQ --> RRRR[Medical Context Persistence]
+        RRRR --> SSSS[Session State Management]
+    end
+    
+    F --> PPPP
+    RR --> PPPP
+    
+    subgraph "Error Handling"
+        TTTT[Database Connection Errors]
+        TTTT --> UUUU[API Rate Limiting]
+        UUUU --> VVVV[Medical Content Safety]
+        VVVV --> WWWW[Graceful Degradation]
+        WWWW --> XXXX[Fallback Responses]
+    end
+    
+    style A fill:#e1f5fe
+    style T fill:#f3e5f5
+    style SS fill:#e8f5e8
+    style BBB fill:#fff3e0
+    style HHH fill:#fce4ec
+    style PPP fill:#ffebee
+    style HHHH fill:#e8eaf6
+    style PPPP fill:#f1f8e9
+    style TTTT fill:#fff3e0

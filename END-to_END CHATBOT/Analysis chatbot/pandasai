@@ -1,0 +1,217 @@
+import gradio as gr
+import pandas as pd
+import numpy as np
+from langchain_google_genai import ChatGoogleGenerativeAI
+from pandasai import SmartDataframe
+import json
+import re
+ 
+def process_query(query, csv_file):
+    """
+    Args:
+        query (str): The user's text query
+        csv_file (file-like): Uploaded CSV file
+    Returns:
+        pandas.DataFrame: Processed dataframe for display
+    """
+    if csv_file is None:
+        return pd.DataFrame({"Message": ["Please upload a CSV file"]})
+    if not query or query.strip() == "":
+        return pd.DataFrame({"Message": ["Please ask a Question"]})
+    try:
+        # Read the CSV file
+        main_df = pd.read_csv(csv_file)
+        query = query.lower().strip()
+ 
+        # Initialize the LLM for PandasAI
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            temperature=0.7,
+            top_p=0.85,
+            google_api_key="AIzaSyCk2wC71GZpGgjUpbz5rJZXyO-KKYGDzx8"
+        )
+        # First, check if this is a location-based query
+        location_info = location_prompt(query)
+        # If it's not a location-based query, handle with regular PandasAI
+        if not location_info.get('has_relative_location', False):
+            df = SmartDataframe(main_df, config={"llm": llm, "save_logs": True, "verbose": False})
+            return df.chat(query)
+        # If it is a location-based query, process location filtering first
+        # Default location (for "near me" queries)
+        DEFAULT_USER_LAT = 19.1136  # Mumbai coordinates
+        DEFAULT_USER_LNG = 72.8697
+        # Set center coordinates based on query
+        if location_info.get('near_me', False):
+            center_lat = DEFAULT_USER_LAT
+            center_lon = DEFAULT_USER_LNG
+        else:
+            center_lat = location_info.get('coordinates', {}).get('lat')
+            center_lon = location_info.get('coordinates', {}).get('lng')
+            # If coordinates are null but we have a reference location, 
+            # we could add geocoding here in the future
+            if center_lat is None or center_lon is None:
+                # For now, default to Mumbai if coordinates not available
+                center_lat = DEFAULT_USER_LAT
+                center_lon = DEFAULT_USER_LNG
+        # Get the search radius
+        radius_km = location_info.get('radius_km', 10)
+        # Prepare location columns
+        lat_col = next((col for col in main_df.columns if col.lower() in ['latitude', 'lat']), None)
+        lon_col = next((col for col in main_df.columns if col.lower() in ['longitude', 'lng', 'lon']), None)
+        if lat_col is None or lon_col is None:
+            return pd.DataFrame({"Error": ["No latitude/longitude columns found in the CSV. Please use a dataset with location information."]})
+        # Calculate distances using haversine formula
+        main_df['distance_km'] = main_df.apply(
+            lambda row: haversine(center_lat, center_lon, row[lat_col], row[lon_col]), 
+            axis=1
+        )
+        # Filter by distance
+        filtered_df = main_df[main_df['distance_km'] <= radius_km].copy()
+        if filtered_df.empty:
+            return pd.DataFrame({"Message": [f"No properties found within {radius_km} km of the specified location."]})
+        # Sort by distance
+        filtered_df = filtered_df.sort_values('distance_km')
+        filtered_df['distance_km'] = filtered_df['distance_km'].round(2)
+        # Use PandasAI on the filtered dataset
+        df = SmartDataframe(filtered_df, config={"llm": llm, "save_logs": True, "verbose": False})
+        # Modify query to include distance context
+        enhanced_query = f"{query}. Results are already filtered to show properties within {radius_km} km of the reference location, sorted by proximity. The distance_km column shows the distance in kilometers."
+        return df.chat(enhanced_query)
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Error occurred: {error_details}")
+        return pd.DataFrame({"Error": [f"Error processing file: {str(e)}"]})
+ 
+def location_prompt(query):
+    """
+    Use Gemini to analyze a query for location references.
+    Returns a structured JSON with location information.
+    """
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash",
+        temperature=0.7,
+        top_p=0.85,
+        google_api_key="AIzaSyCk2wC71GZpGgjUpbz5rJZXyO-KKYGDzx8"
+    )
+ 
+    prompt = f"""
+You are a precision Location Analyzer.
+ 
+Task:
+- Analyze the following user query for any relative location references (e.g., "near me", "near [place]", "within [distance] of [place]").
+- If a relative location is found:
+  - Extract the reference location (it can be of 2 types ["user's current location" or "reference Location"]).
+  - Extract the distance and unit (e.g., "5 km", "3 miles"). If missing, default to 10 kilometers.
+ 
+- If no relative location is found, return:
+  - "has_relative_location": false
+ 
+Important formatting rules:
+- Return only a valid and directly parsable JSON.
+- If user's current location is required, set "near_me" to TRUE.
+- Do NOT include any preceding or succeeding characters, backticks, markdown, comments, or extra text.
+ 
+Examples of Relative Location References:
+<example>
+    'near', 'nearby', 'close to', 'within', 'proximity', 'distance', 'walking distance',
+    'miles from', 'kilometers from', 'km from', 'location', 'around me', 'around', 'near me'
+</example>
+ 
+Other rules:
+- Restrict only to coordinates of India.
+- Ignore general areas unless directly tied to "near", "around", or "within [distance]".
+- Guess coordinates from available coordinates — always use appropriate values for "lat" and "lng".
+ 
+Return output in the following JSON format (strict, no extra text):
+{{
+"has_relative_location": true,
+"near_me": false,
+"reference_location": "airport",
+"coordinates": {{
+    "lat": null,
+    "lng": null
+}},
+"radius_km": 5
+}}
+ 
+User query to analyze:
+{query}
+"""
+    location_response = llm.invoke(prompt)
+    # Extract JSON from response
+    try:
+        # Try to find JSON pattern in the response
+        match = re.search(r'\{.*\}', location_response.content, re.DOTALL)
+        if match:
+            parsed = json.loads(match.group())
+            return parsed
+        # If no match, try to parse the whole response as JSON
+        return json.loads(location_response.content)
+    except (json.JSONDecodeError, AttributeError) as e:
+        print(f"Failed to parse location response: {e}")
+        # Return a default response if parsing fails
+        return {"has_relative_location": False}
+ 
+def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great circle distance between two points
+    on the earth (specified in decimal degrees)
+    """
+    # Convert to float if strings were passed
+    try:
+        lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
+    except (ValueError, TypeError):
+        # Return a large value if conversion fails
+        return float('inf')
+    # Convert decimal degrees to radians
+    R = 6371.0
+    lat1 = np.radians(lat1)
+    lon1 = np.radians(lon1)
+    lat2 = np.radians(lat2)
+    lon2 = np.radians(lon2)
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = np.sin(dlat / 2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2)**2
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+    distance = R * c
+    return distance
+ 
+# Create the Gradio interface
+with gr.Blocks(title="Real Estate Searching Tool") as app:
+    gr.Markdown("# Real Estate Searching Tool")
+    gr.Markdown("""Upload a CSV file with property data and enter a query to explore your data.
+ 
+For location-based searches, try phrases like:
+- "Show me apartments near me"
+- "Find houses within 5 km of Airport"
+- "List properties nearby"
+    """)
+    with gr.Row():
+        with gr.Column():
+            query_input = gr.Textbox(
+                label="Enter your query",
+                placeholder="Examples: 'show 3BHK apartments near me', 'find properties within 5km of Bandra', etc.",
+                lines=2
+            )
+            file_input = gr.File(
+                label="Upload your CSV file",
+                file_types=[".csv"]
+            )
+            submit_btn = gr.Button("Process", variant="primary")
+    output = gr.Dataframe(label="Results")
+    submit_btn.click(
+        fn=process_query,
+        inputs=[query_input, file_input],
+        outputs=output
+    )    
+    # Also process when Enter key is pressed in the query input
+    query_input.submit(
+        fn=process_query,
+        inputs=[query_input, file_input],
+        outputs=output
+    )
+ 
+# Launch the app
+if __name__ == "__main__":
+    app.launch()

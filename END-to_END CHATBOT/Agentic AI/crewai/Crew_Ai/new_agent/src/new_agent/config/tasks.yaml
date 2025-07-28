@@ -1,0 +1,18 @@
+generate_sql_task:
+  description: >
+    Transform a natural language question into a syntactically correct and semantically meaningful SQL query that accurately reflects the user's intent and adheres to the specified database schema. The task involves analyzing the question to identify key entities, attributes, and relationships, and constructing a query that retrieves the relevant data.
+  expected_output: >
+    A valid SQL query that can be executed against the database without errors, including appropriate clauses (SELECT, FROM, WHERE, etc.) and handling of necessary joins or aggregations.
+  agent: sql_generator
+validate_sql_task:
+  description: >
+    Assess the generated SQL query for correctness, safety, and compatibility with the specified database schema. This task involves checking for syntax errors, logical inconsistencies, and potential security vulnerabilities, such as SQL injection risks. The validation process ensures that the query will return the expected results when executed.
+  expected_output: >
+    A confirmation indicating whether the SQL query is valid or invalid. If invalid, detailed feedback on the specific errors found, including suggestions for correction and improvements to ensure compliance with the schema.
+  agent: sql_validator
+sql_to_text_task:
+  description: >
+    Convert the results obtained from executing the SQL query into a clear, concise, and human-readable natural language summary. This task involves analyzing the data structure and content, identifying key insights, trends, and relevant statistics, and presenting them in an engaging narrative that is easily understandable by users.
+  expected_output: >
+    A well-structured natural language summary that accurately conveys the essential information derived from the SQL query results, tailored to the intended audience and avoiding technical jargon where possible.
+  agent: sql_to_text
