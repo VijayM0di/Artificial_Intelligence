@@ -1,0 +1,17 @@
+image_parameters:
+  height_og: 720
+  img_path: img/static_frame_from_video_10_50_10_42.jpg
+  p1:
+  - 6
+  - 395
+  p2:
+  - 5
+  - 13
+  p3:
+  - 713
+  - 395
+  p4:
+  - 714
+  - 28
+  size_frame: 720
+  width_og: 405

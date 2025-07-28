@@ -1,0 +1,306 @@
+{
+    "8": {
+        "path": "rtsp://admin:DPW.AI.cctv@192.168.141.226:554/DT/media.smp",
+        "preset": {
+            "3": {
+                "corner_points": [
+                    [
+                        365,
+                        399
+                    ],
+                    [
+                        4,
+                        169
+                    ],
+                    [
+                        712,
+                        301
+                    ],
+                    [
+                        27,
+                        75
+                    ]
+                ],
+                "water_edge_points": [
+                    [
+                        403,
+                        3
+                    ],
+                    [
+                        401,
+                        714
+                    ],
+                    [
+                        46,
+                        714
+                    ],
+                    [
+                        117,
+                        2
+                    ]
+                ],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": 720,
+                "img_path": "../../img/static_frame_from_video_8.jpg"
+            }
+        }
+    },
+    "9": {
+        "path": "rtsp://admin:DPW.AI.cctv@192.168.141.227:554/DT/media.smp",
+        "preset": {
+            "4": {
+                "corner_points": [
+                    [
+                        118,
+                        390
+                    ],
+                    [
+                        246,
+                        9
+                    ],
+                    [
+                        590,
+                        395
+                    ],
+                    [
+                        482,
+                        11
+                    ]
+                ],
+                "water_edge_points": [
+                    [
+                        403,
+                        6
+                    ],
+                    [
+                        401,
+                        544
+                    ],
+                    [
+                        12,
+                        410
+                    ],
+                    [
+                        11,
+                        3
+                    ]
+                ],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": 720,
+                "img_path": "../../img/static_frame_from_video_9.jpg"
+            }
+        }
+    },
+    "2": {
+        "path": "rtsp://admin:KSAdpw.RTIS@10.50.10.42:554/DT/media.smp",
+        "preset": {
+            "1": {
+                "corner_points": [
+                    [
+                        2,
+                        161
+                    ],
+                    [
+                        4,
+                        62
+                    ],
+                    [
+                        715,
+                        397
+                    ],
+                    [
+                        715,
+                        135
+                    ]
+                ],
+                "water_edge_points": [],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": "720",
+                "img_path": "../img/static_frame_from_video_2.jpg"
+            }
+        }
+    },
+    "3": {
+        "path": "rtsp://admin:KSAdpw.RTIS@10.50.10.43:554/DT/media.smp",
+        "preset": {
+            "1": {
+                "corner_points": [
+                    [
+                        7,
+                        394
+                    ],
+                    [
+                        5,
+                        62
+                    ],
+                    [
+                        702,
+                        390
+                    ],
+                    [
+                        713,
+                        104
+                    ]
+                ],
+                "water_edge_points": [],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": 720,
+                "img_path": "../img/static_frame_from_video_3.jpg"
+            }
+        }
+    },
+    "4": {
+        "path": "rtsp://admin:KSAdpw.RTIS@10.50.10.44:554/DT/media.smp",
+        "preset": {
+            "1": {
+                "corner_points": [
+                    [
+                        2,
+                        161
+                    ],
+                    [
+                        4,
+                        62
+                    ],
+                    [
+                        715,
+                        397
+                    ],
+                    [
+                        715,
+                        135
+                    ]
+                ],
+                "water_edge_points": [],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": "720",
+                "img_path": "../img/static_frame_from_video_4.jpg"
+            }
+        }
+    },
+    "5": {
+        "path": "rtsp://admin:KSAdpw.RTIS@10.50.10.45:554/DT/media.smp",
+        "preset": {
+            "1": {
+                "corner_points": [
+                    [
+                        2,
+                        161
+                    ],
+                    [
+                        4,
+                        62
+                    ],
+                    [
+                        715,
+                        397
+                    ],
+                    [
+                        715,
+                        135
+                    ]
+                ],
+                "water_edge_points": [],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": "720",
+                "img_path": "../img/static_frame_from_video_5.jpg"
+            }
+        }
+    },
+    "6": {
+        "path": "rtsp://admin:KSAdpw.RTIS@10.50.10.46:554/DT/media.smp",
+        "preset": {
+            "1": {
+                "corner_points": [
+                    [
+                        2,
+                        161
+                    ],
+                    [
+                        4,
+                        62
+                    ],
+                    [
+                        715,
+                        397
+                    ],
+                    [
+                        715,
+                        135
+                    ]
+                ],
+                "water_edge_points": [],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": "720",
+                "img_path": "../img/static_frame_from_video_6.jpg"
+            }
+        }
+    },
+    "7": {
+        "path": "rtsp://admin:KSAdpw.RTIS@10.50.10.47:554/DT/media.smp",
+        "preset": {
+            "1": {
+                "corner_points": [
+                    [
+                        7,
+                        393
+                    ],
+                    [
+                        75,
+                        5
+                    ],
+                    [
+                        713,
+                        391
+                    ],
+                    [
+                        712,
+                        4
+                    ]
+                ],
+                "water_edge_points": [],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": 720,
+                "img_path": "../img/static_frame_from_video_7.jpg"
+            }
+        }
+    },
+    "1": {
+        "path": "rtsp://admin:KSAdpw.RTIS@10.50.10.41:554/DT/media.smp",
+        "preset": {
+            "1": {
+                "corner_points": [
+                    [
+                        7,
+                        388
+                    ],
+                    [
+                        3,
+                        70
+                    ],
+                    [
+                        701,
+                        396
+                    ],
+                    [
+                        710,
+                        100
+                    ]
+                ],
+                "water_edge_points": [],
+                "height_og": 720,
+                "width_og": 405,
+                "size_frame": 720,
+                "img_path": "../img/static_frame_from_video_1.jpg"
+            }
+        }
+    }
+}
